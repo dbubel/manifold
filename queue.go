@@ -1,10 +1,10 @@
-package rank_one
+package manifold
 
 import (
 	"context"
 	"fmt"
-	"github.com/dbubel/rank-one/compression"
-	"github.com/dbubel/rank-one/linked_list"
+	"github.com/dbubel/manifold/compression"
+	"github.com/dbubel/manifold/linked_list"
 	"sync"
 )
 

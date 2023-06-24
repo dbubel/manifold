@@ -1,4 +1,4 @@
-package mocks
+package main
 
 import (
 	"context"
@@ -10,18 +10,13 @@ import (
 	"net"
 )
 
-type ServeCommand struct {
+type server struct {
+	sq.ManifoldServer
+	q manifold.Queues
+	l *logging.Logger
 }
 
-func (c *ServeCommand) Help() string {
-	return ""
-}
-
-func (c *ServeCommand) Synopsis() string {
-	return "Runs the cohesion content API server"
-}
-
-func (c *ServeCommand) Run(args []string) int {
+func main() {
 	fmt.Println("Starting server...")
 	s := grpc.NewServer()
 
@@ -46,13 +41,7 @@ func (c *ServeCommand) Run(args []string) int {
 	if err := s.Serve(lis); err != nil {
 		l.Error(err.Error())
 	}
-	return 0
-}
 
-type server struct {
-	sq.ManifoldServer
-	q manifold.Queues
-	l *logging.Logger
 }
 
 func (s *server) ListTopics(_ context.Context, _ *sq.Empty) (*sq.StringList, error) {

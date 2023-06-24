@@ -3,7 +3,7 @@ package mocks
 import (
 	"context"
 	"fmt"
-	echo "github.com/dbubel/rank-one/proto_files"
+	echo "github.com/dbubel/manifold/proto_files"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"

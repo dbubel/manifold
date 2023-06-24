@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/dbubel/rank-one/examples/mocks"
+	"github.com/dbubel/manifold/examples/mocks"
 	"github.com/mitchellh/cli"
 	"os"
 )

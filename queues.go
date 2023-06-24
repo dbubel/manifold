@@ -1,4 +1,4 @@
-package rank_one
+package manifold
 
 import (
 	"context"
