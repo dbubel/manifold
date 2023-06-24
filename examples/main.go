@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dbubel/manifold/examples/mocks"
 	"github.com/mitchellh/cli"
-	"os"
 )
 
 func main() {

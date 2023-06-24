@@ -3,10 +3,11 @@ package mocks
 import (
 	"context"
 	"fmt"
+	"log"
+
 	echo "github.com/dbubel/manifold/proto_files"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 )
 
 type ProduceCommand struct {

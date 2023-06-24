@@ -3,11 +3,12 @@ package mocks
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
+
 	echo "github.com/dbubel/manifold/proto_files"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
-	"log"
 )
 
 type ConsumeCommand struct {

@@ -1,4 +1,4 @@
-package manifold
+package queue
 
 import (
 	"bytes"

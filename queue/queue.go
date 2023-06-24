@@ -1,11 +1,12 @@
-package manifold
+package queue
 
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/dbubel/manifold/compression"
 	"github.com/dbubel/manifold/linked_list"
-	"sync"
 )
 
 type Queue struct {
@@ -24,17 +25,18 @@ func NewQueue() *Queue {
 	return q
 }
 
-func (q *Queue) Enqueue(value []uint8) {
+func (q *Queue) Enqueue(value []uint8) error {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
 	cmpValue, err := q.compression.CompressIOPool(value)
 	if err != nil {
-
+		return err
 	}
 	q.list.PushBack(cmpValue)
 	q.Cond.Signal()
-	q.Cond.Broadcast()
+	//q.Cond.Broadcast()
+	return nil
 }
 
 func (q *Queue) Dequeue() ([]uint8, error) {

@@ -8,6 +8,7 @@ import (
 )
 
 type Level int
+type Fields map[string]interface{}
 
 const (
 	DEBUG Level = iota
