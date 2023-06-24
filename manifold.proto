@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package manifold;
+option go_package = "./proto";
+
+message EnqueueMsg {
+  string topicName = 1;
+  bytes data = 2;
+}
+
+message EnqueueAck {
+  string data = 1;
+}
+
+message DequeueMsg {
+  string topicName = 1;
+}
+
+message DequeueAck {
+  bytes data = 1;
+}
+
+message Empty {}
+message StringList {
+  map<string, int32> my_map = 1;
+}
+
+service Manifold {
+  rpc Enqueue(EnqueueMsg) returns (EnqueueAck) {}
+  rpc Dequeue(DequeueMsg) returns (DequeueAck) {}
+  rpc StreamDequeue (DequeueMsg) returns (stream DequeueAck);
+  rpc StreamEnqueue (EnqueueMsg) returns (stream EnqueueAck);
+  rpc ListTopics(Empty) returns (StringList) {}
+}

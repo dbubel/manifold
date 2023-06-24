@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  api:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080
+  nginx:
+    image: nginx:latest
+    ports:
+      - 50051:50051
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
