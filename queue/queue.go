@@ -29,17 +29,17 @@ func (q *Queue) Enqueue(value []uint8) error {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
-	cmpValue, err := q.compression.CompressIOPool(value)
+	cmpValue, err := q.compression.Compress(value)
 	if err != nil {
 		return err
 	}
 	q.list.PushBack(cmpValue)
 	q.Cond.Signal()
-	//q.Cond.Broadcast()
+
 	return nil
 }
 
-func (q *Queue) Dequeue() ([]uint8, error) {
+func (q *Queue) Dequeue() (*linked_list.Element, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -50,10 +50,15 @@ func (q *Queue) Dequeue() ([]uint8, error) {
 	element := q.list.Front()
 	q.list.Remove(element)
 
-	return q.compression.DecompressIOPool(element.Value)
+	err := q.compression.Decompress(element)
+	if err != nil {
+		return nil, err
+	}
+
+	return element, nil
 }
 
-func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
+func (q *Queue) BlockingDequeue(ctx context.Context) *linked_list.Element {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -66,10 +71,13 @@ func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
 	}
 
 	element := q.list.Front()
-	val, _ := q.compression.DecompressIOPool(element.Value)
+	err := q.compression.Decompress(element)
+	if err != nil {
+		return nil
+	}
 	q.list.Remove(element)
 
-	return val
+	return element
 }
 
 func (q *Queue) Len() int {

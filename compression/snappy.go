@@ -2,6 +2,7 @@ package compression
 
 import (
 	"bytes"
+	"github.com/dbubel/manifold/linked_list"
 	"io"
 	"sync"
 
@@ -28,7 +29,7 @@ func NewSnappy() *SnappyCompressor {
 	}
 }
 
-func (sc *SnappyCompressor) CompressIOPool(data []byte) ([]byte, error) {
+func (sc *SnappyCompressor) Compress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := sc.writerPool.Get().(*snappy.Writer)
 	writer.Reset(&buf)
@@ -44,16 +45,17 @@ func (sc *SnappyCompressor) CompressIOPool(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (sc *SnappyCompressor) DecompressIOPool(data []byte) ([]byte, error) {
-	b := bytes.NewBuffer(data)
+func (sc *SnappyCompressor) Decompress(element *linked_list.Element) error {
+	b := bytes.NewBuffer(element.Value)
 	reader := sc.readerPool.Get().(*snappy.Reader)
 	reader.Reset(b)
 
 	uncompressed, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	element.Value = uncompressed
 	sc.readerPool.Put(reader)
-	return uncompressed, nil
+	return nil
 }

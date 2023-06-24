@@ -16,8 +16,8 @@ func TestQueue(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if !bytes.Equal(value, []byte("Hello")) {
-			t.Errorf("Expected '%v, got '%v'", []byte("Hello"), value)
+		if !bytes.Equal(value.Value, []byte("Hello")) {
+			t.Errorf("Expected '%v, got '%v'", []byte("Hello"), value.Value)
 		}
 	})
 
@@ -36,8 +36,8 @@ func TestQueue(t *testing.T) {
 			queue.Enqueue([]byte("Go"))
 		}()
 		value := queue.BlockingDequeue(context.TODO())
-		if !bytes.Equal(value, []byte("Go")) {
-			t.Errorf("Expected 'Go', got '%s'", string(value))
+		if !bytes.Equal(value.Value, []byte("Go")) {
+			t.Errorf("Expected 'Go', got '%s'", string(value.Value))
 		}
 		queue.Dequeue() // empty the queue
 	})

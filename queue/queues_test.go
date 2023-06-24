@@ -16,8 +16,8 @@ func TestQueues(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if !bytes.Equal(value, []byte("Hello")) {
-			t.Errorf("Expected 'Hello', got '%v'", string(value))
+		if !bytes.Equal(value.Value, []byte("Hello")) {
+			t.Errorf("Expected 'Hello', got '%v'", string(value.Value))
 		}
 	})
 
@@ -44,8 +44,8 @@ func TestQueues(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if !bytes.Equal(value, []byte("Go")) {
-			t.Errorf("Expected 'Go', got '%v'", value)
+		if !bytes.Equal(value.Value, []byte("Go")) {
+			t.Errorf("Expected 'Go', got '%v'", value.Value)
 		}
 		queues.Dequeue("queue1") // empty the queue
 	})

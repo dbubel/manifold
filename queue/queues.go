@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"fmt"
+	"github.com/dbubel/manifold/linked_list"
 )
 
 // Queues In Go, a map is a reference type, so you don't need to use pointer semantics to access the map.
@@ -27,7 +28,7 @@ func (q Queues) List() map[string]int32 {
 	return m
 }
 
-func (q Queues) Dequeue(id string) ([]uint8, error) {
+func (q Queues) Dequeue(id string) (*linked_list.Element, error) {
 	queue, ok := q[id]
 	if !ok {
 		// Create a new queue if it doesn't exist yet
@@ -37,7 +38,7 @@ func (q Queues) Dequeue(id string) ([]uint8, error) {
 	return queue.Dequeue()
 }
 
-func (q Queues) BlockingDequeue(ctx context.Context, id string) ([]uint8, error) {
+func (q Queues) BlockingDequeue(ctx context.Context, id string) (*linked_list.Element, error) {
 	queue, ok := q[id]
 	if !ok {
 		// Create a new queue if it doesn't exist yet
