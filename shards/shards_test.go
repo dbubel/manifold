@@ -20,7 +20,7 @@ func TestShardedDataBasic(t *testing.T) {
 }
 
 func TestShardedDataTwoShards(t *testing.T) {
-	data := NewShardedQueues(2)
+	data := NewShardedQueues(20)
 	err := data.Enqueue("test", []byte("Hello World!"))
 	if err != nil {
 		t.Errorf("Error: %v", err)

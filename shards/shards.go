@@ -2,7 +2,6 @@ package shards
 
 import (
 	"crypto/rand"
-	"fmt"
 	"github.com/dbubel/manifold/queue"
 	"hash/fnv"
 )
@@ -16,18 +15,24 @@ type Shard struct {
 }
 
 type ShardedData struct {
-	shards    []*Shard
-	NumShards int
+	shards    map[uint32]*Shard
+	NumShards uint32
 }
 
-func NewShardedQueues(shardNum int) *ShardedData {
+func NewShardedQueues(shardNum uint32) *ShardedData {
 	d := &ShardedData{
 		NumShards: shardNum,
+		shards:    make(map[uint32]*Shard),
 	}
-	for i := 0; i < shardNum; i++ {
-		d.shards = append(d.shards, &Shard{
+
+	var i uint32
+	for i = 0; i < shardNum; i++ {
+		d.shards[i] = &Shard{
 			queues: make(queue.Queues),
-		})
+		}
+		//d.shards = append(d.shards, &Shard{
+		//	queues: make(queue.Queues),
+		//})
 	}
 	return d
 }
@@ -63,10 +68,9 @@ func (d *ShardedData) Dequeue(topic string) ([]byte, error) {
 	bytes, err := shard.queues.Dequeue(topic)
 
 	if err != nil && err.Error() == "queue is empty" {
-		for _, s := range d.shards {
-			fmt.Println(s.queues.Len(topic))
-			if i, _ := s.queues.Len(topic); i > 0 {
-				bytes, err = s.queues.Dequeue(topic)
+		for _, v := range d.shards {
+			if i, _ := v.queues.Len(topic); i > 0 {
+				bytes, err = v.queues.Dequeue(topic)
 				break
 			}
 		}
