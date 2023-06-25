@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/dbubel/manifold/logging"
 	"github.com/dbubel/manifold/proto_files"
-	"github.com/dbubel/manifold/queue"
+	"github.com/dbubel/manifold/shards"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -21,7 +21,7 @@ func (c *ManifoldServerCmd) Synopsis() string {
 
 type server struct {
 	proto.ManifoldServer
-	q queue.Queues
+	q *shards.ShardedTopics
 	l *logging.Logger
 }
 
@@ -37,7 +37,7 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 	}
 
 	proto.RegisterManifoldServer(grpcServer, &server{
-		q: make(queue.Queues),
+		q: shards.NewShardedTopics(10),
 		l: l,
 	})
 

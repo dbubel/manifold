@@ -1,4 +1,4 @@
-package queue
+package topics
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestQueues(t *testing.T) {
-	queues := make(Queues)
+	queues := make(Topics)
 
 	t.Run("Test enqueue and dequeue", func(t *testing.T) {
 		queues.Enqueue("queue1", []byte("Hello"))
