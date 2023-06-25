@@ -25,7 +25,7 @@ func NewQueue() *Queue {
 	return q
 }
 
-func (q *Queue) Enqueue(value *linked_list.Element) error {
+func (q *Queue) Enqueue(value []uint8) error {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -39,7 +39,7 @@ func (q *Queue) Enqueue(value *linked_list.Element) error {
 	return nil
 }
 
-func (q *Queue) Dequeue() (*linked_list.Element, error) {
+func (q *Queue) Dequeue() ([]byte, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -50,15 +50,15 @@ func (q *Queue) Dequeue() (*linked_list.Element, error) {
 	element := q.list.Front()
 	q.list.Remove(element)
 
-	err := q.compression.Decompress(element)
+	decompressed, err := q.compression.Decompress(element.Value)
 	if err != nil {
 		return nil, err
 	}
 
-	return element, nil
+	return decompressed, nil
 }
 
-func (q *Queue) BlockingDequeue(ctx context.Context) *linked_list.Element {
+func (q *Queue) BlockingDequeue(ctx context.Context) []byte {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -71,13 +71,13 @@ func (q *Queue) BlockingDequeue(ctx context.Context) *linked_list.Element {
 	}
 
 	element := q.list.Front()
-	err := q.compression.Decompress(element)
+	decompressed, err := q.compression.Decompress(element.Value)
 	if err != nil {
 		return nil
 	}
 	q.list.Remove(element)
 
-	return element
+	return decompressed
 }
 
 func (q *Queue) Len() int {

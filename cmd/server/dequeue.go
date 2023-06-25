@@ -19,7 +19,7 @@ func (s *server) Dequeue(_ context.Context, in *proto.DequeueMsg) (*proto.Dequeu
 
 	s.l.WithFields(map[string]interface{}{"topic": in.GetTopicName()}).Debug("dequeue ok")
 
-	return &proto.DequeueAck{Data: data.Value}, nil
+	return &proto.DequeueAck{Data: data}, nil
 }
 
 func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_StreamDequeueServer) error {
@@ -46,7 +46,7 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 
 			// Create a new StreamResponse message
 			res := &proto.DequeueAck{
-				Data: result.Value,
+				Data: result,
 			}
 
 			// Send the response to the client
