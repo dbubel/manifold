@@ -29,20 +29,20 @@ func NewSnappy() *SnappyCompressor {
 	}
 }
 
-func (sc *SnappyCompressor) Compress(data []byte) ([]byte, error) {
-	var buf bytes.Buffer
+func (sc *SnappyCompressor) Compress(data *linked_list.Element) error {
+	buf := bytes.NewBuffer(data.Value)
 	writer := sc.writerPool.Get().(*snappy.Writer)
-	writer.Reset(&buf)
+	writer.Reset(buf)
 
-	if _, err := writer.Write(data); err != nil {
-		return nil, err
+	if _, err := writer.Write(buf.); err != nil {
+		return err
 	}
 	if err := writer.Close(); err != nil {
-		return nil, err
+		return err
 	}
 
 	sc.writerPool.Put(writer)
-	return buf.Bytes(), nil
+	return nil
 }
 
 func (sc *SnappyCompressor) Decompress(element *linked_list.Element) error {

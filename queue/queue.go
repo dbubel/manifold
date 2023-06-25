@@ -25,7 +25,7 @@ func NewQueue() *Queue {
 	return q
 }
 
-func (q *Queue) Enqueue(value []uint8) error {
+func (q *Queue) Enqueue(value *linked_list.Element) error {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
