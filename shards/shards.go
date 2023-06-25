@@ -1,63 +1,102 @@
 package shards
 
 import (
+	"crypto/rand"
+	"fmt"
+	"github.com/dbubel/manifold/queue"
 	"hash/fnv"
-	"sync"
 )
 
-const NumberOfShards = 10
+//const NumberOfShards = 1
 
 type Shard struct {
-	sync.RWMutex
-	data map[string]string
+	//sync.RWMutex
+	queues queue.Queues
+	//NumShards int
 }
 
 type ShardedData struct {
-	shards [NumberOfShards]*Shard
+	shards    []*Shard
+	NumShards int
 }
 
-func NewShardedData() *ShardedData {
-	d := &ShardedData{}
-	for i := 0; i < NumberOfShards; i++ {
-		d.shards[i] = &Shard{
-			data: make(map[string]string),
-		}
+func NewShardedQueues(shardNum int) *ShardedData {
+	d := &ShardedData{
+		NumShards: shardNum,
+	}
+	for i := 0; i < shardNum; i++ {
+		d.shards = append(d.shards, &Shard{
+			queues: make(queue.Queues),
+		})
 	}
 	return d
 }
 
-func (d *ShardedData) GetShard(key string) *Shard {
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func (d *ShardedData) GetShard(key []byte) (*Shard, error) {
 	hasher := fnv.New32a()
-	hasher.Write([]byte(key))
-	shardID := hasher.Sum32() % NumberOfShards
-	return d.shards[shardID]
+	_, err := hasher.Write(key)
+	if err != nil {
+		return nil, err
+	}
+	shardID := hasher.Sum32() % uint32(d.NumShards)
+	return d.shards[shardID], nil
 }
 
-func (d *ShardedData) Get(key string) (value string, ok bool) {
-	shard := d.GetShard(key)
-	shard.RLock()
-	defer shard.RUnlock()
+func (d *ShardedData) GetShardList() {
 
-	value, ok = shard.data[key]
-	return
 }
 
-func (d *ShardedData) Set(key string, value string) {
-	shard := d.GetShard(key)
-	shard.Lock()
-	defer shard.Unlock()
+func (d *ShardedData) Dequeue(topic string) ([]byte, error) {
+	x, _ := generateRandomBytes(10)
+	//fmt.Printf("%x", x)
+	shard, _ := d.GetShard(x)
 
-	shard.data[key] = value
+	bytes, err := shard.queues.Dequeue(topic)
+
+	if err != nil && err.Error() == "queue is empty" {
+		for _, s := range d.shards {
+			fmt.Println(s.queues.Len(topic))
+			if i, _ := s.queues.Len(topic); i > 0 {
+				bytes, err = s.queues.Dequeue(topic)
+				break
+			}
+		}
+	}
+	return bytes, err
 }
 
-func main() {
-	data := NewShardedData()
+func (d *ShardedData) Enqueue(id string, value []byte) error {
+	rnd, _ := generateRandomBytes(20)
+	shard, err := d.GetShard(rnd)
+	if err != nil {
+		return err
+	}
 
-	data.Set("key1", "value1")
-	data.Set("key2", "value2")
-	data.Set("key3", "value3")
-
-	println(data.Get("key1")) // prints "value1"
-	println(data.Get("key2")) // prints "value2"
-	println(data.Get("key3")) // prints "value3"
+	//shard.Lock()
+	//defer shard.Unlock()
+	z := shard.queues.Enqueue(id, value)
+	return z
+	//shard.queues[key] = value
 }
+
+//
+//func main() {
+//	queues := NewShardedQueues()
+//
+//	queues.Set("key1", "value1")
+//	queues.Set("key2", "value2")
+//	queues.Set("key3", "value3")
+//
+//	println(queues.Get("key1")) // prints "value1"
+//	println(queues.Get("key2")) // prints "value2"
+//	println(queues.Get("key3")) // prints "value3"
+//}

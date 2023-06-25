@@ -1,13 +1,11 @@
 package linked_list
 
-import "time"
-
 type Element struct {
-	Value       []uint8
-	EnqueueTime time.Time
-	next        *Element
-	prev        *Element
-	list        *List
+	Value []uint8
+	//EnqueueTime time.Time
+	next *Element
+	prev *Element
+	list *List
 }
 
 type List struct {
