@@ -3,6 +3,7 @@ package shards
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"github.com/dbubel/manifold/topics"
 	"hash/fnv"
 )
@@ -14,6 +15,14 @@ type Shard struct {
 type ShardedTopics struct {
 	shards    map[uint32]*Shard
 	NumShards uint32
+}
+
+func (s *ShardedTopics) List() {
+	for k, v := range s.shards {
+		for x, y := range v.queues.List() {
+			fmt.Println(k, v, x, y)
+		}
+	}
 }
 
 func NewShardedTopics(shardNum uint32) *ShardedTopics {
