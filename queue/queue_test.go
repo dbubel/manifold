@@ -3,6 +3,7 @@ package queue
 import (
 	"bytes"
 	"context"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -51,4 +52,23 @@ func TestQueue(t *testing.T) {
 			t.Errorf("Expected 'queue is empty', got '%s'", err.Error())
 		}
 	})
+}
+
+func BenchmarkQueue(b *testing.B) {
+	q := NewQueue()
+
+	// Seed the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	// Enqueue random slices of bytes
+	for i := 0; i < b.N; i++ {
+		value := make([]uint8, rand.Intn(1000))
+		rand.Read(value)
+		q.Enqueue(value)
+	}
+
+	// Dequeue all elements
+	for i := 0; i < b.N; i++ {
+		q.Dequeue()
+	}
 }
