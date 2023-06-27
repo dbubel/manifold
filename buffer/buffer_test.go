@@ -1,84 +1,89 @@
 package buffer
 
 import (
+	"bytes"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 )
 
 func TestCircularBuffer_Read(t *testing.T) {
-	cb := DoublyLinked()
+	cb := NewBuffer()
 
-	cb.Write(1)
-	cb.Write(2)
-	cb.Write(3)
+	cb.Write([]uint8{1})
+	cb.Write([]uint8{2})
+	cb.Write([]uint8{3})
 
-	if cb.Read() != 1 {
-		t.Errorf("Expected 1, but got %v", cb.Read())
+	val := cb.Read()
+	if !bytes.Equal(val, []uint8{1}) {
+		t.Errorf("Expected %d, but got %d", []uint8{1}, val)
 	}
 
-	if cb.Read() != 2 {
-		t.Errorf("Expected 2, but got %v", cb.Read())
+	val = cb.Read()
+	if !bytes.Equal(val, []uint8{2}) {
+		t.Errorf("Expected %d, but got %d", []uint8{2}, val)
 	}
 
-	if cb.Read() != 3 {
-		t.Errorf("Expected 3, but got %v", cb.Read())
+	val = cb.Read()
+	if !bytes.Equal(val, []uint8{3}) {
+		t.Errorf("Expected %d, but got %d", []uint8{3}, val)
 	}
 }
 
 func TestCircularBuffer_Write(t *testing.T) {
-	cb := DoublyLinked()
+	cb := NewBuffer()
 
-	cb.Write(1)
-	cb.Write(2)
-	cb.Write(3)
+	cb.Write([]byte{1})
+	cb.Write([]byte{2})
+	cb.Write([]byte{3})
 
-	if cb.head.data != 1 {
+	if !bytes.Equal(cb.head.data, []byte{1}) {
 		t.Errorf("Expected head data to be 1, but got %v", cb.head.data)
 	}
 
-	if cb.tail.data != 3 {
+	if !bytes.Equal(cb.tail.data, []byte{3}) {
 		t.Errorf("Expected tail data to be 3, but got %v", cb.tail.data)
 	}
 }
 
 func TestCircularBuffer_ReadAndWrite(t *testing.T) {
-	cb := DoublyLinked()
+	cb := NewBuffer()
 
-	cb.Write(1)
-	cb.Write(2)
+	cb.Write([]byte{1})
+	cb.Write([]byte{2})
 	cb.Read()
-	cb.Write(3)
-	cb.Write(4)
+	cb.Write([]byte{3})
+	cb.Write([]byte{4})
 
-	if cb.Read() != 2 {
+	if !bytes.Equal(cb.Read(), []byte{2}) {
 		t.Errorf("Expected 2, but got %v", cb.Read())
 	}
 
-	if cb.Read() != 3 {
+	if !bytes.Equal(cb.Read(), []byte{3}) {
 		t.Errorf("Expected 3, but got %v", cb.Read())
 	}
 
-	if cb.Read() != 4 {
+	if !bytes.Equal(cb.Read(), []byte{4}) {
 		t.Errorf("Expected 4, but got %v", cb.Read())
 	}
 }
 
 func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
-	cb := DoublyLinked()
+	cb := NewBuffer()
 
 	go func() {
 		time.Sleep(time.Millisecond * 200)
-		cb.Write(1)
+		cb.Write([]byte{1})
 	}()
 
-	if cb.Read() != 1 {
+	if !bytes.Equal(cb.Read(), []byte{1}) {
 		t.Errorf("Expected 1, but got %v", cb.Read())
 	}
 }
 
 func BenchmarkQueue(b *testing.B) {
-	q := DoublyLinked()
+	q := NewBuffer()
 
 	// Seed the random number generator
 	rand.Seed(time.Now().UnixNano())
@@ -94,4 +99,33 @@ func BenchmarkQueue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		q.Read()
 	}
+}
+
+func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
+	cb := NewBuffer()
+	wg := sync.WaitGroup{}
+
+	//res := []uint8{}
+	//for i := 0; i < 100; i++ {
+	//	go func() {
+	//		res = append(res, cb.Read()...)
+	//		wg.Done()
+	//	}()
+	//}
+
+	for i := 0; i < 100; i++ {
+		go func(a int) {
+			wg.Add(1)
+			cb.Write([]uint8{uint8(a)})
+		}(i)
+	}
+
+	wg.Wait()
+
+	//sort.Slice(res, func(i, j int) bool {
+	//	return res[i] < res[j]
+	//})
+	//
+	//t.Log(res)
+
 }

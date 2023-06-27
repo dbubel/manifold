@@ -1,23 +1,23 @@
 package buffer
 
 type Node struct {
-	data interface{}
+	data []uint8
 	prev *Node
 	next *Node
-	len  int
 }
 
 type DoublyLinkedd struct {
-	inputChannel  chan interface{}
-	outputChannel chan interface{}
+	inputChannel  chan []uint8
+	outputChannel chan []uint8
 	head          *Node
 	tail          *Node
+	len           int
 }
 
-func DoublyLinked() *DoublyLinkedd {
+func NewBuffer() *DoublyLinkedd {
 	cb := &DoublyLinkedd{
-		inputChannel:  make(chan interface{}),
-		outputChannel: make(chan interface{}),
+		inputChannel:  make(chan []uint8),
+		outputChannel: make(chan []uint8),
 	}
 
 	go cb.run()
@@ -48,10 +48,10 @@ func (cb *DoublyLinkedd) run() {
 	}
 }
 
-func (cb *DoublyLinkedd) Write(val interface{}) {
+func (cb *DoublyLinkedd) Write(val []uint8) {
 	cb.inputChannel <- val
 }
 
-func (cb *DoublyLinkedd) Read() interface{} {
+func (cb *DoublyLinkedd) Read() []uint8 {
 	return <-cb.outputChannel
 }
