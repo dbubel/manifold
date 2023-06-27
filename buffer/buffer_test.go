@@ -2,6 +2,7 @@ package buffer
 
 import (
 	"bytes"
+	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
@@ -105,13 +106,7 @@ func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 	cb := NewBuffer()
 	wg := sync.WaitGroup{}
 
-	//res := []uint8{}
-	//for i := 0; i < 100; i++ {
-	//	go func() {
-	//		res = append(res, cb.Read()...)
-	//		wg.Done()
-	//	}()
-	//}
+	res := []uint8{}
 
 	for i := 0; i < 100; i++ {
 		go func(a int) {
@@ -120,12 +115,30 @@ func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 		}(i)
 	}
 
-	wg.Wait()
+	for i := 0; i < 100; i++ {
+		go func() {
+			res = append(res, cb.Read()[0])
+			wg.Done()
+		}()
+	}
 
-	//sort.Slice(res, func(i, j int) bool {
-	//	return res[i] < res[j]
-	//})
-	//
+	fmt.Println(verifySlice(res))
 	//t.Log(res)
 
+}
+
+func verifySlice(numbers []uint8) bool {
+	numMap := make(map[uint8]bool)
+
+	for _, num := range numbers {
+		numMap[num] = true
+	}
+
+	for i := 0; i < 100; i++ {
+		if _, ok := numMap[uint8(i)]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
