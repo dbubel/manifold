@@ -16,13 +16,13 @@ type ShardedTopics struct {
 	NumShards uint32
 }
 
-func (s *ShardedTopics) List() {
-	for k, v := range s.shards {
-		for x, y := range v.queues.List() {
-			fmt.Println(k, v, x, y)
-		}
-	}
-}
+//func (s *ShardedTopics) List() {
+//	for k, v := range s.shards {
+//		for x, y := range v.queues.List() {
+//			fmt.Println(k, v, x, y)
+//		}
+//	}
+//}
 
 func NewShardedTopics(shardNum uint32) *ShardedTopics {
 	sd := &ShardedTopics{
@@ -55,10 +55,6 @@ func (d *ShardedTopics) GetShard(key []byte) (*Shard, error) {
 	return d.shards[shardID], nil
 }
 
-//		data, err = shard.queues.BlockingDequeue(ctx, topic)
-//
-//		return data, err
-//	}
 func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
 	x, err := generateRandomBytes(10)
 	if err != nil {
@@ -72,16 +68,19 @@ func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
 
 	data := shard.queues.Dequeue(topic)
 
-	if err != nil && err.Error() == "queue is empty" {
-		for _, v := range d.shards {
-			if i, _ := v.queues.Len(topic); i > 0 {
-				data, err = v.queues.Dequeue(topic)
-				break
-			}
+	if data == nil {
+		for k, v := range d.shards {
+			//fmt.Println("shard num", k)
+			fmt.Println("shardNum", k, "topic", v.queues.GetTopic(topic).Name)
+			//for i, j := range v.queues.List() {
+			//	fmt.Println(k, v, i, j)
+			//}
 		}
 	}
+
 	return data, err
 }
+
 func (d *ShardedTopics) Enqueue(id string, value []byte) error {
 	rnd, _ := generateRandomBytes(20)
 	shard, err := d.GetShard(rnd)

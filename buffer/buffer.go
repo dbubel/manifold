@@ -11,19 +11,17 @@ type Node struct {
 type DoublyLinkedd struct {
 	inputChannel  chan []uint8
 	outputChannel chan []uint8
-	//lengthReq     chan bool
-	lengthRes chan int
-	head      *Node
-	tail      *Node
-	len       int
+	lengthRes     chan int
+	head          *Node
+	tail          *Node
+	len           int
 }
 
 func NewBuffer() *DoublyLinkedd {
 	cb := &DoublyLinkedd{
 		inputChannel:  make(chan []uint8),
 		outputChannel: make(chan []uint8),
-		//lengthReq:     make(chan bool),
-		lengthRes: make(chan int),
+		lengthRes:     make(chan int),
 	}
 
 	go cb.run()
@@ -39,6 +37,7 @@ func (cb *DoublyLinkedd) run() {
 			cb.len++
 		} else {
 			select {
+			case cb.lengthRes <- cb.len:
 			case val := <-cb.inputChannel:
 				node := &Node{data: val, prev: cb.tail}
 				cb.tail.next = node
@@ -52,7 +51,6 @@ func (cb *DoublyLinkedd) run() {
 					cb.head.prev = nil
 				}
 				cb.len--
-			case cb.lengthRes <- cb.len:
 
 			}
 		}
@@ -73,7 +71,7 @@ func (cb *DoublyLinkedd) Read() []uint8 {
 	}
 }
 
-func (cb *DoublyLinkedd) Length() int {
+func (cb *DoublyLinkedd) Len() int {
 	timer := time.NewTimer(time.Millisecond * 10)
 	select {
 	case l := <-cb.lengthRes:
@@ -81,5 +79,4 @@ func (cb *DoublyLinkedd) Length() int {
 	case <-timer.C:
 		return 0
 	}
-	//return <-cb.lengthRes
 }
