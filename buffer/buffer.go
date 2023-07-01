@@ -1,5 +1,7 @@
 package buffer
 
+import "time"
+
 type Node struct {
 	data []uint8
 	prev *Node
@@ -9,15 +11,19 @@ type Node struct {
 type DoublyLinkedd struct {
 	inputChannel  chan []uint8
 	outputChannel chan []uint8
-	head          *Node
-	tail          *Node
-	len           int
+	//lengthReq     chan bool
+	lengthRes chan int
+	head      *Node
+	tail      *Node
+	len       int
 }
 
 func NewBuffer() *DoublyLinkedd {
 	cb := &DoublyLinkedd{
 		inputChannel:  make(chan []uint8),
 		outputChannel: make(chan []uint8),
+		//lengthReq:     make(chan bool),
+		lengthRes: make(chan int),
 	}
 
 	go cb.run()
@@ -30,12 +36,14 @@ func (cb *DoublyLinkedd) run() {
 			val := <-cb.inputChannel
 			node := &Node{data: val}
 			cb.head, cb.tail = node, node
+			cb.len++
 		} else {
 			select {
 			case val := <-cb.inputChannel:
 				node := &Node{data: val, prev: cb.tail}
 				cb.tail.next = node
 				cb.tail = node
+				cb.len++
 			case cb.outputChannel <- cb.head.data:
 				if cb.head == cb.tail {
 					cb.head, cb.tail = nil, nil
@@ -43,6 +51,9 @@ func (cb *DoublyLinkedd) run() {
 					cb.head = cb.head.next
 					cb.head.prev = nil
 				}
+				cb.len--
+			case cb.lengthRes <- cb.len:
+
 			}
 		}
 	}
@@ -53,5 +64,22 @@ func (cb *DoublyLinkedd) Write(val []uint8) {
 }
 
 func (cb *DoublyLinkedd) Read() []uint8 {
-	return <-cb.outputChannel
+	timer := time.NewTimer(time.Millisecond * 10)
+	select {
+	case item := <-cb.outputChannel:
+		return item
+	case <-timer.C:
+		return nil
+	}
+}
+
+func (cb *DoublyLinkedd) Length() int {
+	timer := time.NewTimer(time.Millisecond * 10)
+	select {
+	case l := <-cb.lengthRes:
+		return l
+	case <-timer.C:
+		return 0
+	}
+	//return <-cb.lengthRes
 }

@@ -3,6 +3,7 @@ package buffer
 import (
 	"bytes"
 	"math/rand"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -82,6 +83,33 @@ func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 	}
 }
 
+func TestCircularBuffer_Len(t *testing.T) {
+	cb := NewBuffer()
+
+	cb.Write([]byte{1})
+	cb.Write([]byte{1})
+	cb.Write([]byte{1})
+	cb.Read()
+	t.Log(cb.Length())
+	t.Log(cb.Length())
+	t.Log(cb.Length())
+	t.Log(cb.Length())
+
+	cb.Read()
+	cb.Read()
+	cb.Read()
+	cb.Read()
+	t.Log(cb.Length())
+
+	//cb.Read()
+	//t.Log(cb.Length())
+	//cb.Read()
+	//t.Log(cb.Length())
+	//cb.Read()
+	//time.Sleep(time.Millisecond * 1000)
+
+}
+
 func BenchmarkQueue(b *testing.B) {
 	q := NewBuffer()
 
@@ -103,29 +131,73 @@ func BenchmarkQueue(b *testing.B) {
 
 func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 	cb := NewBuffer()
-	wg := sync.WaitGroup{}
+	t.Run("concurrent read write, write first", func(t *testing.T) {
+		wg := sync.WaitGroup{}
+		var mu sync.Mutex
 
-	//res := []uint8{}
-	//for i := 0; i < 100; i++ {
-	//	go func() {
-	//		res = append(res, cb.Read()...)
-	//		wg.Done()
-	//	}()
-	//}
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				wg.Add(1)
+				cb.Write([]uint8{uint8(a)})
+			}(i)
+		}
 
-	for i := 0; i < 100; i++ {
-		go func(a int) {
-			wg.Add(1)
-			cb.Write([]uint8{uint8(a)})
-		}(i)
-	}
+		var res []uint8
+		for i := 0; i < 100; i++ {
+			go func() {
+				mu.Lock()
+				defer mu.Unlock()
+				res = append(res, cb.Read()...)
+				wg.Done()
+			}()
+		}
 
-	wg.Wait()
+		wg.Wait()
 
-	//sort.Slice(res, func(i, j int) bool {
-	//	return res[i] < res[j]
-	//})
-	//
-	//t.Log(res)
+		sort.Slice(res, func(i, j int) bool {
+			return res[i] < res[j]
+		})
 
+		// verify that the list res contains all the numbers from 0 to 99
+		for i := 0; i < 100; i++ {
+			if res[i] != uint8(i) {
+				t.Errorf("Expected %d, but got %d", i, res[i])
+			}
+		}
+	})
+
+	t.Run("concurrent read write, read first", func(t *testing.T) {
+		wg := sync.WaitGroup{}
+		var mu sync.Mutex
+
+		var res []uint8
+		for i := 0; i < 100; i++ {
+			go func() {
+				mu.Lock()
+				defer mu.Unlock()
+				res = append(res, cb.Read()...)
+				wg.Done()
+			}()
+		}
+
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				wg.Add(1)
+				cb.Write([]uint8{uint8(a)})
+			}(i)
+		}
+
+		wg.Wait()
+
+		sort.Slice(res, func(i, j int) bool {
+			return res[i] < res[j]
+		})
+
+		// verify that the list res contains all the numbers from 0 to 99
+		for i := 0; i < 100; i++ {
+			if res[i] != uint8(i) {
+				t.Errorf("Expected %d, but got %d", i, res[i])
+			}
+		}
+	})
 }

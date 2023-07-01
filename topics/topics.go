@@ -42,15 +42,14 @@ func (t *Topics) Dequeue(id string) []uint8 {
 	return topic.Queue.Read()
 }
 
-//
-//func (t Topics) List() map[string]int32 {
-//	var m map[string]int32
-//	m = make(map[string]int32)
-//	for k, v := range t {
-//		m[k] = int32(v.Len())
-//	}
-//	return m
-//}
+func (t Topics) List() map[string]int32 {
+	var result = make(map[string]int32)
+	for k, v := range t.Topics {
+		result[k] = int32(v.Queue.Len())
+	}
+	return result
+}
+
 //
 //func (t Topics) Dequeue(id string) ([]byte, error) {
 //	queue, ok := t[id]
