@@ -8,7 +8,7 @@ import (
 )
 
 type Shard struct {
-	queues *topics.Topics
+	topics *topics.Topics
 }
 
 type ShardedTopics struct {
@@ -18,7 +18,7 @@ type ShardedTopics struct {
 
 //func (s *ShardedTopics) List() {
 //	for k, v := range s.shards {
-//		for x, y := range v.queues.List() {
+//		for x, y := range v.topics.List() {
 //			fmt.Println(k, v, x, y)
 //		}
 //	}
@@ -33,7 +33,7 @@ func NewShardedTopics(shardNum uint32) *ShardedTopics {
 	var i uint32
 	for i = 0; i < shardNum; i++ {
 		sd.shards[i] = &Shard{
-			queues: topics.New(),
+			topics: topics.New(),
 		}
 	}
 	return sd
@@ -66,13 +66,17 @@ func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
 		return nil, err
 	}
 
-	data := shard.queues.Dequeue(topic)
+	data := shard.topics.Dequeue(topic)
 
 	if data == nil {
 		for k, v := range d.shards {
 			//fmt.Println("shard num", k)
-			fmt.Println("shardNum", k, "topic", v.queues.GetTopic(topic).Name)
-			//for i, j := range v.queues.List() {
+			tpc := v.topics.GetTopic(topic)
+			if tpc == nil {
+				continue
+			}
+			if tpc.Queue.Len()
+			//for i, j := range v.topics.List() {
 			//	fmt.Println(k, v, i, j)
 			//}
 		}
@@ -88,6 +92,6 @@ func (d *ShardedTopics) Enqueue(id string, value []byte) error {
 		return err
 	}
 
-	shard.queues.Enqueue(id, value)
+	shard.topics.Enqueue(id, value)
 	return nil
 }
