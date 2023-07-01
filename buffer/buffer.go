@@ -1,6 +1,9 @@
 package buffer
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Node struct {
 	data []uint8
@@ -51,7 +54,6 @@ func (cb *DoublyLinkedd) run() {
 					cb.head.prev = nil
 				}
 				cb.len--
-
 			}
 		}
 	}
@@ -61,7 +63,7 @@ func (cb *DoublyLinkedd) Write(val []uint8) {
 	cb.inputChannel <- val
 }
 
-func (cb *DoublyLinkedd) Read() []uint8 {
+func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
 	timer := time.NewTimer(time.Millisecond * 10)
 	select {
 	case item := <-cb.outputChannel:

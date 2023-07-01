@@ -57,16 +57,19 @@ func TestCircularBuffer_ReadAndWrite(t *testing.T) {
 	cb.Write([]byte{3})
 	cb.Write([]byte{4})
 
-	if !bytes.Equal(cb.Read(), []byte{2}) {
-		t.Errorf("Expected 2, but got %v", cb.Read())
+	val := cb.Read()
+	if !bytes.Equal(val, []byte{2}) {
+		t.Errorf("Expected 2, but got %v", val)
 	}
 
-	if !bytes.Equal(cb.Read(), []byte{3}) {
-		t.Errorf("Expected 3, but got %v", cb.Read())
+	val = cb.Read()
+	if !bytes.Equal(val, []byte{3}) {
+		t.Errorf("Expected 3, but got %v", val)
 	}
 
-	if !bytes.Equal(cb.Read(), []byte{4}) {
-		t.Errorf("Expected 4, but got %v", cb.Read())
+	val = cb.Read()
+	if !bytes.Equal(val, []byte{4}) {
+		t.Errorf("Expected 4, but got %v", val)
 	}
 }
 
@@ -74,12 +77,13 @@ func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 	cb := NewBuffer()
 
 	go func() {
-		time.Sleep(time.Millisecond * 200)
+		time.Sleep(time.Millisecond * 1)
 		cb.Write([]byte{1})
 	}()
 
-	if !bytes.Equal(cb.Read(), []byte{1}) {
-		t.Errorf("Expected 1, but got %v", cb.Read())
+	val := cb.Read()
+	if !bytes.Equal(val, []byte{1}) {
+		t.Errorf("Expected 1, but got %v", val)
 	}
 }
 

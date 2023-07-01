@@ -2,7 +2,6 @@ package shards
 
 import (
 	"crypto/rand"
-	"fmt"
 	"github.com/dbubel/manifold/topics"
 	"hash/fnv"
 )
@@ -15,14 +14,6 @@ type ShardedTopics struct {
 	shards    map[uint32]*Shard
 	NumShards uint32
 }
-
-//func (s *ShardedTopics) List() {
-//	for k, v := range s.shards {
-//		for x, y := range v.topics.List() {
-//			fmt.Println(k, v, x, y)
-//		}
-//	}
-//}
 
 func NewShardedTopics(shardNum uint32) *ShardedTopics {
 	sd := &ShardedTopics{
@@ -56,6 +47,7 @@ func (d *ShardedTopics) GetShard(key []byte) (*Shard, error) {
 }
 
 func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
+	// we randomly generate a key to get a shard
 	x, err := generateRandomBytes(10)
 	if err != nil {
 		return nil, err
@@ -66,19 +58,23 @@ func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
 		return nil, err
 	}
 
+	// from the randomly picked shard we attempt to dequeue an item from the topic
 	data := shard.topics.Dequeue(topic)
 
+	// if the topic is empty we iterate over shards and return the first item we find
 	if data == nil {
-		for k, v := range d.shards {
-			//fmt.Println("shard num", k)
+		for _, v := range d.shards {
+			// we check if the topic exists on this shard
 			tpc := v.topics.GetTopic(topic)
 			if tpc == nil {
 				continue
 			}
-			if tpc.Queue.Len()
-			//for i, j := range v.topics.List() {
-			//	fmt.Println(k, v, i, j)
-			//}
+
+			// if the topic exists we attempt to dequeue an item
+			if tpc.Queue.Len() > 0 {
+				data = tpc.Queue.Read()
+				break
+			}
 		}
 	}
 

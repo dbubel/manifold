@@ -26,6 +26,7 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 	// This is a loop that continues to stream messages to the client
 	// TODO: add select for cancelling when the app is shut down
 	ctx, cancel := context.WithCancel(stream.Context())
+	_ = ctx
 	defer cancel()
 	defer fmt.Println("stream dequeue ended")
 
@@ -36,7 +37,7 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 			return nil
 		default:
 			// TODO: return an object that we can finalize deque if the send fails
-			result, err := s.q.BlockingDequeue(ctx, req.TopicName)
+			result, err := s.q.Dequeue(req.TopicName)
 			if err != nil {
 				s.l.WithFields(map[string]interface{}{
 					"err": err.Error(),
