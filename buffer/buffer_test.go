@@ -2,6 +2,7 @@ package buffer
 
 import (
 	"bytes"
+	"context"
 	"math/rand"
 	"sort"
 	"sync"
@@ -16,17 +17,19 @@ func TestCircularBuffer_Read(t *testing.T) {
 	cb.Write([]uint8{2})
 	cb.Write([]uint8{3})
 
-	val := cb.Read()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	val := cb.Read(ctx)
 	if !bytes.Equal(val, []uint8{1}) {
 		t.Errorf("Expected %d, but got %d", []uint8{1}, val)
 	}
 
-	val = cb.Read()
+	val = cb.Read(ctx)
 	if !bytes.Equal(val, []uint8{2}) {
 		t.Errorf("Expected %d, but got %d", []uint8{2}, val)
 	}
 
-	val = cb.Read()
+	val = cb.Read(ctx)
 	if !bytes.Equal(val, []uint8{3}) {
 		t.Errorf("Expected %d, but got %d", []uint8{3}, val)
 	}
@@ -50,24 +53,26 @@ func TestCircularBuffer_Write(t *testing.T) {
 
 func TestCircularBuffer_ReadAndWrite(t *testing.T) {
 	cb := NewBuffer()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 
 	cb.Write([]byte{1})
 	cb.Write([]byte{2})
-	cb.Read()
+	cb.Read(ctx)
 	cb.Write([]byte{3})
 	cb.Write([]byte{4})
 
-	val := cb.Read()
+	val := cb.Read(ctx)
 	if !bytes.Equal(val, []byte{2}) {
 		t.Errorf("Expected 2, but got %v", val)
 	}
 
-	val = cb.Read()
+	val = cb.Read(ctx)
 	if !bytes.Equal(val, []byte{3}) {
 		t.Errorf("Expected 3, but got %v", val)
 	}
 
-	val = cb.Read()
+	val = cb.Read(ctx)
 	if !bytes.Equal(val, []byte{4}) {
 		t.Errorf("Expected 4, but got %v", val)
 	}
@@ -75,13 +80,14 @@ func TestCircularBuffer_ReadAndWrite(t *testing.T) {
 
 func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 	cb := NewBuffer()
-
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 	go func() {
-		time.Sleep(time.Millisecond * 1)
+		time.Sleep(time.Millisecond * 100)
 		cb.Write([]byte{1})
 	}()
 
-	val := cb.Read()
+	val := cb.Read(ctx)
 	if !bytes.Equal(val, []byte{1}) {
 		t.Errorf("Expected 1, but got %v", val)
 	}
@@ -89,33 +95,66 @@ func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 
 func TestCircularBuffer_Len(t *testing.T) {
 	cb := NewBuffer()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 
 	cb.Write([]byte{1})
 	cb.Write([]byte{1})
 	cb.Write([]byte{1})
-	cb.Read()
-	t.Log(cb.Len())
-	t.Log(cb.Len())
-	t.Log(cb.Len())
-	t.Log(cb.Len())
+	cb.Read(ctx)
+	t.Log(cb.Len(ctx))
+	t.Log(cb.Len(ctx))
+	t.Log(cb.Len(ctx))
+	t.Log(cb.Len(ctx))
 
-	cb.Read()
-	cb.Read()
-	cb.Read()
-	cb.Read()
-	t.Log(cb.Len())
+	cb.Read(ctx)
+	cb.Read(ctx)
+	cb.Read(ctx)
+	cb.Read(ctx)
+	t.Log(cb.Len(ctx))
 
-	//cb.Read()
+	//cb.Read(ctx)
 	//t.Log(cb.Length())
-	//cb.Read()
+	//cb.Read(ctx)
 	//t.Log(cb.Length())
-	//cb.Read()
+	//cb.Read(ctx)
 	//time.Sleep(time.Millisecond * 1000)
 
 }
 
+func TestCircularBuffer_LenEmpty(t *testing.T) {
+	cb := NewBuffer()
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+
+	//cb.Write([]byte{1})
+	//cb.Write([]byte{1})
+	//cb.Write([]byte{1})
+	//cb.Write([]byte{1})
+	//cb.Read(ctx)
+	t.Log(cb.Len(ctx))
+}
+
+func TestCircularBuffer_ReadTimeout(t *testing.T) {
+	cb := NewBuffer()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	cb.Write([]byte{1})
+	cb.Write([]byte{2})
+	cb.Read(ctx)
+	cb.Read(ctx)
+
+	val := cb.Read(ctx)
+	if val != nil {
+		t.Errorf("Expected nil, but got %v", val)
+	}
+}
+
 func BenchmarkQueue(b *testing.B) {
 	q := NewBuffer()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// Seed the random number generator
 	rand.Seed(time.Now().UnixNano())
@@ -129,7 +168,7 @@ func BenchmarkQueue(b *testing.B) {
 
 	// Dequeue all elements
 	for i := 0; i < b.N; i++ {
-		q.Read()
+		q.Read(ctx)
 	}
 }
 
@@ -138,6 +177,9 @@ func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 	t.Run("concurrent read write, write first", func(t *testing.T) {
 		wg := sync.WaitGroup{}
 		var mu sync.Mutex
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
 
 		for i := 0; i < 100; i++ {
 			go func(a int) {
@@ -151,7 +193,7 @@ func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 			go func() {
 				mu.Lock()
 				defer mu.Unlock()
-				res = append(res, cb.Read()...)
+				res = append(res, cb.Read(ctx)...)
 				wg.Done()
 			}()
 		}
@@ -174,12 +216,15 @@ func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
 		wg := sync.WaitGroup{}
 		var mu sync.Mutex
 
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
 		var res []uint8
 		for i := 0; i < 100; i++ {
 			go func() {
 				mu.Lock()
 				defer mu.Unlock()
-				res = append(res, cb.Read()...)
+				res = append(res, cb.Read(ctx)...)
 				wg.Done()
 			}()
 		}

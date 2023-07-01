@@ -2,15 +2,19 @@ package topics
 
 import (
 	"bytes"
+	"context"
 	"testing"
+	"time"
 )
 
 func TestQueues(t *testing.T) {
 	topics := New()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 
 	t.Run("Test enqueue and dequeue", func(t *testing.T) {
 		topics.Enqueue("queue1", []byte("Hello"))
-		value := topics.Dequeue("queue1")
+		value := topics.Dequeue(ctx, "queue1")
 		//fmt.Println(value)
 		if value == nil {
 			t.Error("Expected 'Hello', got nil")
@@ -24,7 +28,7 @@ func TestQueues(t *testing.T) {
 	t.Run("Test enqueue and dequeue multiple topics", func(t *testing.T) {
 		topics.Enqueue("queue1", []byte("Hello"))
 		topics.Enqueue("queue1", []byte("World"))
-		value := topics.Dequeue("queue1")
+		value := topics.Dequeue(ctx, "queue1")
 
 		if value == nil {
 			t.Error("Expected 'Hello', got nil")
@@ -35,7 +39,7 @@ func TestQueues(t *testing.T) {
 		}
 
 		topics.Enqueue("queue2", []byte("Hello"))
-		value = topics.Dequeue("queue2")
+		value = topics.Dequeue(ctx, "queue2")
 		if value == nil {
 			t.Error("Expected 'Hello', got nil")
 			return

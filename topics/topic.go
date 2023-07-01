@@ -13,6 +13,3 @@ func newTopic(name string) *Topic {
 		Queue: buffer.NewBuffer(),
 	}
 }
-func Len(t *Topic) int {
-	return t.Queue.Len()
-}

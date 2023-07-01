@@ -1,5 +1,7 @@
 package topics
 
+import "context"
+
 type Topics struct {
 	Topics map[string]*Topic
 }
@@ -32,20 +34,20 @@ func (t *Topics) Enqueue(id string, value []uint8) {
 	topic.Queue.Write(value)
 }
 
-func (t *Topics) Dequeue(id string) []uint8 {
+func (t *Topics) Dequeue(ctx context.Context, id string) []uint8 {
 	topic := t.GetTopic(id)
 	if topic == nil {
 		// Create a new queue if it doesn't exist yet
 		t.AddTopic(id)
 	}
 	topic = t.GetTopic(id)
-	return topic.Queue.Read()
+	return topic.Queue.Read(ctx)
 }
 
-func (t Topics) List() map[string]int32 {
+func (t Topics) List(ctx context.Context) map[string]int32 {
 	var result = make(map[string]int32)
 	for k, v := range t.Topics {
-		result[k] = int32(v.Queue.Len())
+		result[k] = int32(v.Queue.Len(ctx))
 	}
 	return result
 }
