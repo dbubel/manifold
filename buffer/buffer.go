@@ -11,18 +11,18 @@ type Node struct {
 }
 
 type DoublyLinkedd struct {
-	inputChannel  chan []uint8
-	outputChannel chan []uint8
-	m             sync.Mutex
+	InputChannel  chan []uint8
+	OutputChannel chan []uint8
 	head          *Node
 	tail          *Node
 	len           int
+	m             sync.RWMutex
 }
 
 func NewBuffer(inputChannel, outputChannel chan []byte) *DoublyLinkedd {
 	cb := &DoublyLinkedd{
-		inputChannel:  inputChannel,
-		outputChannel: outputChannel,
+		InputChannel:  inputChannel,
+		OutputChannel: outputChannel,
 		len:           0,
 	}
 
@@ -34,19 +34,20 @@ func (cb *DoublyLinkedd) run() {
 	for {
 		// this prevents the len function from not needing the sync lock.
 		if cb.head == nil {
-			val := <-cb.inputChannel
+			//cb.LenChannel <- 0
+			val := <-cb.InputChannel
 			node := &Node{data: val}
 			cb.head, cb.tail = node, node
 			cb.len++
 		} else {
 			select {
-			//case cb.lengthRes <- cb.len:
-			case val := <-cb.inputChannel:
+			//case cb.LenChannel <- cb.len:
+			case val := <-cb.InputChannel:
 				node := &Node{data: val, prev: cb.tail}
 				cb.tail.next = node
 				cb.tail = node
 				cb.len++
-			case cb.outputChannel <- cb.head.data:
+			case cb.OutputChannel <- cb.head.data:
 				if cb.head == cb.tail {
 					cb.head, cb.tail = nil, nil
 				} else {
@@ -59,34 +60,9 @@ func (cb *DoublyLinkedd) run() {
 	}
 }
 
-//
-//func (cb *DoublyLinkedd) Write(val []uint8) {
-//	cb.inputChannel <- val
-//}
-
-//func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
-//	return <-cb.outputChannel
-//	//timer := time.NewTicker(time.Second)
-//	//select {
-//	//case item := <-cb.outputChannel:
-//	//	return item
-//	//case <-timer.C:
-//	//	fmt.Println("cancelled")
-//	//	return nil
-//	//}
-//}
-
-//func (cb *DoublyLinkedd) Len(ctx context.Context) int {
-//	//timer := time.NewTimer(1 * time.Second)
-//	//return cb.len
-//	// TODO:(dean) this bugs me a lot. This is the only lock used.
-//	cb.m.Lock()
-//	defer cb.m.Unlock()
-//	return cb.len
-//	//select {
-//	//case i := <-cb.lengthRes:
-//	//	return i
-//	//case <-ctx.Done():
-//	//	return 7
-//	//}
-//}
+func (cb *DoublyLinkedd) Len() int {
+	// TODO:(dbubel) figure out a way to do this with a channel
+	cb.m.RLock()
+	defer cb.m.RUnlock()
+	return cb.len
+}

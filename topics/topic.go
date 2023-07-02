@@ -29,3 +29,7 @@ func (t *Topic) Enqueue(data []byte) {
 func (t *Topic) Dequeue() []byte {
 	return <-t.outputChannel
 }
+
+func (t *Topic) Len() int {
+	return t.Queue.Len()
+}

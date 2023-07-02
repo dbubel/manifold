@@ -2,9 +2,11 @@ package topics
 
 type Topics struct {
 	addTopic      chan string
-	input         chan intern
+	input         chan TopicEnqueueWrapper
 	output        chan []byte
 	outputRequest chan string
+	listTopicsReq chan struct{}
+	listTopicsRes chan map[string]int
 	Topics        map[string]*Topic
 }
 
@@ -12,16 +14,18 @@ func New() *Topics {
 	t := Topics{
 		Topics:        make(map[string]*Topic),
 		addTopic:      make(chan string),
-		input:         make(chan intern),
+		input:         make(chan TopicEnqueueWrapper),
 		output:        make(chan []byte),
 		outputRequest: make(chan string),
+		listTopicsReq: make(chan struct{}),
+		listTopicsRes: make(chan map[string]int),
 	}
 
 	go t.run()
 	return &t
 }
 
-type intern struct {
+type TopicEnqueueWrapper struct {
 	TopicName string
 	Data      []byte
 }
@@ -29,6 +33,12 @@ type intern struct {
 func (t *Topics) run() {
 	for {
 		select {
+		case <-t.listTopicsReq:
+			//topicsList := make(map[string]int)
+			//for k,v:=range t.Topics{
+			//
+			//}
+			t.listTopicsRes <- make(map[string]int)
 		case val := <-t.addTopic:
 			if _, ok := t.Topics[val]; !ok {
 				t.Topics[val] = newTopic(val)
@@ -36,9 +46,15 @@ func (t *Topics) run() {
 		case val := <-t.input:
 			t.Topics[val.TopicName].Enqueue(val.Data)
 		case val := <-t.outputRequest:
-			t.output <- t.Topics[val].Dequeue()
+			x := t.Topics[val].Dequeue()
+			t.output <- x
 		}
 	}
+}
+
+func (t *Topics) ListTopics() map[string]int {
+	t.listTopicsReq <- struct{}{}
+	return <-t.listTopicsRes
 }
 
 func (t *Topics) AddTopic(topicName string) {
@@ -46,7 +62,7 @@ func (t *Topics) AddTopic(topicName string) {
 }
 
 func (t *Topics) Enqueue(topicName string, data []byte) {
-	t.input <- intern{
+	t.input <- TopicEnqueueWrapper{
 		TopicName: topicName,
 		Data:      data,
 	}

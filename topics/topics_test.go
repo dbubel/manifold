@@ -90,6 +90,7 @@ func TestTopics_EnqueueDequeue(t *testing.T) {
 				wg.Done()
 			}(i)
 		}
+
 		wg.Wait()
 
 		var results sync.Map

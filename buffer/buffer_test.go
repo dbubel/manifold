@@ -103,11 +103,11 @@ func BenchmarkCircularBufferInputOutput(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		data := []byte{byte(i % 256)} // Generate random data
-		cb.inputChannel <- data
-		<-cb.outputChannel
+		cb.InputChannel <- data
+		<-cb.OutputChannel
 	}
 	b.StopTimer()
 
 	// Close the input channel
-	close(cb.inputChannel)
+	close(cb.InputChannel)
 }
