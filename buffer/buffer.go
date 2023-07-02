@@ -2,7 +2,6 @@ package buffer
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -21,10 +20,10 @@ type DoublyLinkedd struct {
 	len           int
 }
 
-func NewBuffer() *DoublyLinkedd {
+func NewBuffer(inputChannel, outputChannel chan []byte) *DoublyLinkedd {
 	cb := &DoublyLinkedd{
-		inputChannel:  make(chan []uint8),
-		outputChannel: make(chan []uint8),
+		inputChannel:  inputChannel,
+		outputChannel: outputChannel,
 		len:           0,
 	}
 
@@ -66,13 +65,15 @@ func (cb *DoublyLinkedd) Write(val []uint8) {
 }
 
 func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
-	select {
-	case item := <-cb.outputChannel:
-		return item
-	case <-ctx.Done():
-		fmt.Println("cancelled")
-		return nil
-	}
+	return <-cb.outputChannel
+	//timer := time.NewTicker(time.Second)
+	//select {
+	//case item := <-cb.outputChannel:
+	//	return item
+	//case <-timer.C:
+	//	fmt.Println("cancelled")
+	//	return nil
+	//}
 }
 
 //func (cb *DoublyLinkedd) Len(ctx context.Context) int {

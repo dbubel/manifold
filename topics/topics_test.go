@@ -1,71 +1,116 @@
 package topics
 
 import (
-	"bytes"
-	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 )
 
-func TestTopics(t *testing.T) {
+const topicOne = "TOPIC_ONE"
+
+func TestTopics_AddTopic(t *testing.T) {
 	topics := New()
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	t.Run("Test enqueue and dequeue", func(t *testing.T) {
-		topics.Enqueue("queue1", []byte("Hello"))
-		value := topics.Dequeue(ctx, "queue1")
-		if value == nil {
-			t.Error("Expected 'Hello', got nil")
-			return
-		}
-		if !bytes.Equal(value, []byte("Hello")) {
-			t.Errorf("Expected 'Hello', got '%v'", string(value))
-		}
-	})
-
-	t.Run("Test enqueue and dequeue multiple topics", func(t *testing.T) {
-		topics.Enqueue("queue1", []byte("Hello"))
-		topics.Enqueue("queue1", []byte("World"))
-		value := topics.Dequeue(ctx, "queue1")
-
-		if value == nil {
-			t.Error("Expected 'Hello', got nil")
-			return
-		}
-		if !bytes.Equal(value, []byte("Hello")) {
-			t.Errorf("Expected 'Hello', got '%v'", string(value))
-		}
-
-		topics.Enqueue("queue2", []byte("Hello"))
-		value = topics.Dequeue(ctx, "queue2")
-		if value == nil {
-			t.Error("Expected 'Hello', got nil")
-			return
-		}
-		if !bytes.Equal(value, []byte("Hello")) {
-			t.Errorf("Expected 'Hello', got '%v'", string(value))
-		}
-	})
-
+	topics.AddTopic(topicOne)
 }
 
-func TestTopicsAsync(t *testing.T) {
+func TestTopics_Enqueue(t *testing.T) {
 	topics := New()
-	t.Run("async read write", func(t *testing.T) {
-		for i := 0; i < 10; i++ {
+	topics.AddTopic(topicOne)
+	topics.Enqueue(topicOne, []byte("hello world"))
+}
+
+func TestTopics_EnqueueDequeue(t *testing.T) {
+	t.Run("test simple enqueue dequeue", func(t *testing.T) {
+		topics := New()
+		topics.AddTopic(topicOne)
+		topics.Enqueue(topicOne, []byte("hello world"))
+		val := topics.Dequeue(topicOne)
+		if string(val) != "hello world" {
+			t.Errorf("Expected: %v, got: %v", "hello world", string(val))
+		}
+	})
+
+	t.Run("test multiple enqueue dequeue", func(t *testing.T) {
+		topics := New()
+		topics.AddTopic(topicOne)
+		for i := 0; i < 100; i++ {
+			topics.Enqueue(topicOne, []byte(fmt.Sprintf("hello world %d", i)))
+		}
+
+		for i := 0; i < 100; i++ {
+			val := topics.Dequeue(topicOne)
+			t.Log(string(val))
+		}
+	})
+
+	t.Run("test async enqueue serial dequeue", func(t *testing.T) {
+		topics := New()
+		topics.AddTopic(topicOne)
+		var wg sync.WaitGroup
+
+		for i := 0; i < 100; i++ {
 			go func(a int) {
-				topics.Enqueue("queue1", []byte("Hello"))
+				wg.Add(1)
+				topics.Enqueue(topicOne, []byte(fmt.Sprintf("hello world %d", a)))
+				wg.Done()
+			}(i)
+		}
+		wg.Wait()
+
+		for i := 0; i < 100; i++ {
+			val := topics.Dequeue(topicOne)
+			t.Log(string(val))
+		}
+	})
+
+	t.Run("test async enqueue async dequeue", func(t *testing.T) {
+		topics := New()
+		topics.AddTopic(topicOne)
+		var wg sync.WaitGroup
+
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				wg.Add(1)
+				topics.Enqueue(topicOne, []byte(fmt.Sprintf("hello world %d", a)))
+				wg.Done()
+			}(i)
+		}
+		wg.Wait()
+
+		var results sync.Map
+		//var m sync.Mutex
+
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				val := topics.Dequeue(topicOne)
+				results.Store(a, string(val))
 			}(i)
 		}
 
-		for i := 0; i < 10; i++ {
-			//ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-			//time.Sleep(time.Millisecond * 200)
+		time.Sleep(time.Second)
+		results.Range(func(key, value any) bool {
+			//fmt.Println(key, value)
+			return true
+		})
 
-			value := topics.Dequeue(context.Background(), "queue1")
-			t.Log(string(value))
-			//cancel()
+		// Check if all expected strings are present
+		allPresent := true
+
+		for i := 0; i < 100; i++ {
+			key := fmt.Sprintf("hello world %d", i)
+			_, found := results.Load(i)
+			if !found {
+				fmt.Println(key)
+				allPresent = false
+				break
+			}
+		}
+
+		if allPresent {
+			fmt.Println("All strings found in the sync map")
+		} else {
+			fmt.Println("Some strings are missing from the sync map")
 		}
 	})
 }

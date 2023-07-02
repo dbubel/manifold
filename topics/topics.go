@@ -1,27 +1,68 @@
 package topics
 
-import (
-	"context"
-	"fmt"
-	"sync"
-)
-
 type Topics struct {
-	m      sync.RWMutex
-	Topics map[string]*Topic
+	addTopic      chan string
+	input         chan intern
+	output        chan []byte
+	outputRequest chan string
+	Topics        map[string]*Topic
 }
 
 func New() *Topics {
-	return &Topics{
-		Topics: make(map[string]*Topic),
+	t := Topics{
+		Topics:        make(map[string]*Topic),
+		addTopic:      make(chan string),
+		input:         make(chan intern),
+		output:        make(chan []byte),
+		outputRequest: make(chan string),
+	}
+
+	go t.run()
+	return &t
+}
+
+type intern struct {
+	TopicName string
+	Data      []byte
+}
+
+func (t *Topics) run() {
+	for {
+		select {
+		case val := <-t.addTopic:
+			if _, ok := t.Topics[val]; !ok {
+				t.Topics[val] = newTopic(val)
+			}
+		case val := <-t.input:
+			t.Topics[val.TopicName].Enqueue(val.Data)
+		case val := <-t.outputRequest:
+			t.output <- t.Topics[val].Dequeue()
+		}
 	}
 }
 
-func (t *Topics) AddTopic(name string) {
-	t.m.Lock()
-	defer t.m.Unlock()
-	t.Topics[name] = newTopic(name)
+func (t *Topics) AddTopic(topicName string) {
+	t.addTopic <- topicName
 }
+
+func (t *Topics) Enqueue(topicName string, data []byte) {
+	t.input <- intern{
+		TopicName: topicName,
+		Data:      data,
+	}
+}
+
+func (t *Topics) Dequeue(topicName string) []byte {
+	t.outputRequest <- topicName
+	return <-t.output
+}
+
+//
+//func (t *Topics) AddTopic(name string) {
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	t.Topics[name] = newTopic(name)
+//}
 
 //func (t *Topics) GetTopic(name string) *Topic {
 //	t.m.RLock()
@@ -31,21 +72,21 @@ func (t *Topics) AddTopic(name string) {
 //	}
 //	return nil
 //}
-
-func (t *Topics) Enqueue(topicName string, data []byte) {
-	if _, exists := t.Topics[topicName]; !exists {
-		fmt.Println("create", topicName)
-		t.AddTopic(topicName)
-	}
-	t.Topics[topicName].Queue.Write(data)
-}
-
-func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
-	//if _, exists := t.Topics[topicName]; !exists {
-	//	t.AddTopic(topicName)
-	//}
-	return t.Topics[topicName].Queue.Read(ctx)
-}
+//
+//func (t *Topics) Enqueue(topicName string, data []byte) {
+//	if _, exists := t.Topics[topicName]; !exists {
+//		fmt.Println("create", topicName)
+//		t.AddTopic(topicName)
+//	}
+//	t.Topics[topicName].Queue.Write(data)
+//}
+//
+//func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+//	//if _, exists := t.Topics[topicName]; !exists {
+//	//	t.AddTopic(topicName)
+//	//}
+//	return t.Topics[topicName].Queue.Read(ctx)
+//}
 
 //
 //// Enqueue adds a value to the queue with the given id.

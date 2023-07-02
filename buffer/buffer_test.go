@@ -11,7 +11,8 @@ import (
 )
 
 func TestCircularBuffer_Read(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 
 	cb.Write([]uint8{1})
 	cb.Write([]uint8{2})
@@ -36,7 +37,8 @@ func TestCircularBuffer_Read(t *testing.T) {
 }
 
 func TestCircularBuffer_Write(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 
 	cb.Write([]byte{1})
 	cb.Write([]byte{2})
@@ -52,7 +54,8 @@ func TestCircularBuffer_Write(t *testing.T) {
 }
 
 func TestCircularBuffer_ReadAndWrite(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -79,7 +82,8 @@ func TestCircularBuffer_ReadAndWrite(t *testing.T) {
 }
 
 func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	go func() {
@@ -136,7 +140,8 @@ func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 //}
 
 func TestCircularBuffer_ReadTimeout(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -152,7 +157,8 @@ func TestCircularBuffer_ReadTimeout(t *testing.T) {
 }
 
 func BenchmarkQueue(b *testing.B) {
-	q := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -163,17 +169,18 @@ func BenchmarkQueue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		value := make([]uint8, rand.Intn(1000))
 		rand.Read(value)
-		q.Write(value)
+		cb.Write(value)
 	}
 
 	// Dequeue all elements
 	for i := 0; i < b.N; i++ {
-		q.Read(ctx)
+		cb.Read(ctx)
 	}
 }
 
 func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
-	cb := NewBuffer()
+	in, out := make(chan []byte), make(chan []byte)
+	cb := NewBuffer(in, out)
 	t.Run("concurrent read write, write first", func(t *testing.T) {
 		wg := sync.WaitGroup{}
 		var mu sync.Mutex
