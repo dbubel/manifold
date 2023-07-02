@@ -1,8 +1,12 @@
 package topics
 
-import "context"
+import (
+	"context"
+	"sync"
+)
 
 type Topics struct {
+	m      sync.RWMutex
 	Topics map[string]*Topic
 }
 
@@ -13,6 +17,8 @@ func New() *Topics {
 }
 
 func (t *Topics) AddTopic(name string) {
+	t.m.Lock()
+	defer t.m.Unlock()
 	t.Topics[name] = newTopic(name)
 }
 
