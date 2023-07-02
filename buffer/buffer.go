@@ -15,19 +15,17 @@ type Node struct {
 type DoublyLinkedd struct {
 	inputChannel  chan []uint8
 	outputChannel chan []uint8
-	//lengthRes     chan int
-	m    sync.Mutex
-	head *Node
-	tail *Node
-	len  int
+	m             sync.Mutex
+	head          *Node
+	tail          *Node
+	len           int
 }
 
 func NewBuffer() *DoublyLinkedd {
 	cb := &DoublyLinkedd{
 		inputChannel:  make(chan []uint8),
 		outputChannel: make(chan []uint8),
-		//lengthRes:     make(chan int),
-		len: 0,
+		len:           0,
 	}
 
 	go cb.run()
@@ -70,26 +68,24 @@ func (cb *DoublyLinkedd) Write(val []uint8) {
 func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
 	select {
 	case item := <-cb.outputChannel:
-		//fmt.Println("item", item)
-		//ctx.Done()
 		return item
 	case <-ctx.Done():
-		fmt.Println("ctx done")
+		fmt.Println("cancelled")
 		return nil
 	}
 }
 
-func (cb *DoublyLinkedd) Len(ctx context.Context) int {
-	//timer := time.NewTimer(1 * time.Second)
-	//return cb.len
-	// TODO:(dean) this bugs me a lot. This is the only lock used.
-	cb.m.Lock()
-	defer cb.m.Unlock()
-	return cb.len
-	//select {
-	//case i := <-cb.lengthRes:
-	//	return i
-	//case <-ctx.Done():
-	//	return 7
-	//}
-}
+//func (cb *DoublyLinkedd) Len(ctx context.Context) int {
+//	//timer := time.NewTimer(1 * time.Second)
+//	//return cb.len
+//	// TODO:(dean) this bugs me a lot. This is the only lock used.
+//	cb.m.Lock()
+//	defer cb.m.Unlock()
+//	return cb.len
+//	//select {
+//	//case i := <-cb.lengthRes:
+//	//	return i
+//	//case <-ctx.Done():
+//	//	return 7
+//	//}
+//}

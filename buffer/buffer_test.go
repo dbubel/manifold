@@ -93,47 +93,47 @@ func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
 	}
 }
 
-func TestCircularBuffer_Len(t *testing.T) {
-	cb := NewBuffer()
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+//func TestCircularBuffer_Len(t *testing.T) {
+//	cb := NewBuffer()
+//	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+//	defer cancel()
+//
+//	cb.Write([]byte{1})
+//	cb.Write([]byte{1})
+//	cb.Write([]byte{1})
+//	cb.Read(ctx)
+//	t.Log(cb.Len(ctx))
+//	t.Log(cb.Len(ctx))
+//	t.Log(cb.Len(ctx))
+//	t.Log(cb.Len(ctx))
+//
+//	cb.Read(ctx)
+//	cb.Read(ctx)
+//	cb.Read(ctx)
+//	cb.Read(ctx)
+//	t.Log(cb.Len(ctx))
+//
+//	//cb.Read(ctx)
+//	//t.Log(cb.Length())
+//	//cb.Read(ctx)
+//	//t.Log(cb.Length())
+//	//cb.Read(ctx)
+//	//time.Sleep(time.Millisecond * 1000)
+//
+//}
 
-	cb.Write([]byte{1})
-	cb.Write([]byte{1})
-	cb.Write([]byte{1})
-	cb.Read(ctx)
-	t.Log(cb.Len(ctx))
-	t.Log(cb.Len(ctx))
-	t.Log(cb.Len(ctx))
-	t.Log(cb.Len(ctx))
-
-	cb.Read(ctx)
-	cb.Read(ctx)
-	cb.Read(ctx)
-	cb.Read(ctx)
-	t.Log(cb.Len(ctx))
-
-	//cb.Read(ctx)
-	//t.Log(cb.Length())
-	//cb.Read(ctx)
-	//t.Log(cb.Length())
-	//cb.Read(ctx)
-	//time.Sleep(time.Millisecond * 1000)
-
-}
-
-func TestCircularBuffer_LenEmpty(t *testing.T) {
-	cb := NewBuffer()
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	//cb.Write([]byte{1})
-	//cb.Write([]byte{1})
-	//cb.Write([]byte{1})
-	//cb.Write([]byte{1})
-	//cb.Read(ctx)
-	t.Log(cb.Len(ctx))
-}
+//func TestCircularBuffer_LenEmpty(t *testing.T) {
+//	cb := NewBuffer()
+//	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+//	defer cancel()
+//
+//	//cb.Write([]byte{1})
+//	//cb.Write([]byte{1})
+//	//cb.Write([]byte{1})
+//	//cb.Write([]byte{1})
+//	//cb.Read(ctx)
+//	t.Log(cb.Len(ctx))
+//}
 
 func TestCircularBuffer_ReadTimeout(t *testing.T) {
 	cb := NewBuffer()

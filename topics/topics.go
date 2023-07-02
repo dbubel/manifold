@@ -2,6 +2,7 @@ package topics
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -22,68 +23,61 @@ func (t *Topics) AddTopic(name string) {
 	t.Topics[name] = newTopic(name)
 }
 
-func (t *Topics) GetTopic(name string) *Topic {
-	if _, exists := t.Topics[name]; exists {
-		return t.Topics[name]
+//func (t *Topics) GetTopic(name string) *Topic {
+//	t.m.RLock()
+//	defer t.m.RUnlock()
+//	if _, exists := t.Topics[name]; exists {
+//		return t.Topics[name]
+//	}
+//	return nil
+//}
+
+func (t *Topics) Enqueue(topicName string, data []byte) {
+	if _, exists := t.Topics[topicName]; !exists {
+		fmt.Println("create", topicName)
+		t.AddTopic(topicName)
 	}
-	return nil
+	t.Topics[topicName].Queue.Write(data)
 }
 
-// Enqueue adds a value to the queue with the given id.
-func (t *Topics) Enqueue(id string, value []uint8) {
-	topic := t.GetTopic(id)
-	if topic == nil {
-		// Create a new queue if it doesn't exist yet
-		t.AddTopic(id)
-	}
-	topic = t.GetTopic(id)
-	topic.Queue.Write(value)
-}
-
-func (t *Topics) Dequeue(ctx context.Context, id string) []uint8 {
-	topic := t.GetTopic(id)
-	if topic == nil {
-		// Create a new queue if it doesn't exist yet
-		t.AddTopic(id)
-	}
-	topic = t.GetTopic(id)
-	return topic.Queue.Read(ctx)
-}
-
-func (t Topics) List(ctx context.Context) map[string]int32 {
-	var result = make(map[string]int32)
-	for k, v := range t.Topics {
-		result[k] = int32(v.Queue.Len(ctx))
-	}
-	return result
+func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+	//if _, exists := t.Topics[topicName]; !exists {
+	//	t.AddTopic(topicName)
+	//}
+	return t.Topics[topicName].Queue.Read(ctx)
 }
 
 //
-//func (t Topics) Dequeue(id string) ([]byte, error) {
-//	queue, ok := t[id]
-//	if !ok {
+//// Enqueue adds a value to the queue with the given id.
+//func (t *Topics) Enqueue(id string, value []uint8) {
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	topic := t.GetTopic(id)
+//	if topic == nil {
 //		// Create a new queue if it doesn't exist yet
-//		queue = q.NewQueue()
-//		t[id] = queue
+//		t.AddTopic(id)
 //	}
-//	return queue.Dequeue()
+//	topic = t.GetTopic(id)
+//	topic.Queue.Write(value)
 //}
 //
-//func (t Topics) BlockingDequeue(ctx context.Context, id string) ([]byte, error) {
-//	queue, ok := t[id]
-//	if !ok {
+//func (t *Topics) Dequeue(ctx context.Context, id string) []uint8 {
+//	t.m.Lock()
+//	defer t.m.Unlock()
+//	topic := t.GetTopic(id)
+//	if topic == nil {
 //		// Create a new queue if it doesn't exist yet
-//		queue = q.NewQueue()
-//		t[id] = queue
+//		t.AddTopic(id)
 //	}
-//	return queue.BlockingDequeue(ctx), nil
+//	topic = t.GetTopic(id)
+//	return topic.Queue.Read(ctx)
 //}
+
 //
-//func (t Topics) Len(id string) (int, error) {
-//	queue, ok := t[id]
-//	if !ok {
-//		// There is no queue with this id
-//		return 0, fmt.Errorf("queue does not exist")
+//func (t Topics) List(ctx context.Context) map[string]int32 {
+//	var result = make(map[string]int32)
+//	for k, v := range t.Topics {
+//		result[k] = int32(v.Queue.Len(ctx))
 //	}
-//	return queue.Len(), nil
+//	return result
 //}

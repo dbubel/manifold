@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestQueues(t *testing.T) {
+func TestTopics(t *testing.T) {
 	topics := New()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -15,7 +15,6 @@ func TestQueues(t *testing.T) {
 	t.Run("Test enqueue and dequeue", func(t *testing.T) {
 		topics.Enqueue("queue1", []byte("Hello"))
 		value := topics.Dequeue(ctx, "queue1")
-		//fmt.Println(value)
 		if value == nil {
 			t.Error("Expected 'Hello', got nil")
 			return
@@ -46,6 +45,27 @@ func TestQueues(t *testing.T) {
 		}
 		if !bytes.Equal(value, []byte("Hello")) {
 			t.Errorf("Expected 'Hello', got '%v'", string(value))
+		}
+	})
+
+}
+
+func TestTopicsAsync(t *testing.T) {
+	topics := New()
+	t.Run("async read write", func(t *testing.T) {
+		for i := 0; i < 10; i++ {
+			go func(a int) {
+				topics.Enqueue("queue1", []byte("Hello"))
+			}(i)
+		}
+
+		for i := 0; i < 10; i++ {
+			//ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+			//time.Sleep(time.Millisecond * 200)
+
+			value := topics.Dequeue(context.Background(), "queue1")
+			t.Log(string(value))
+			//cancel()
 		}
 	})
 }
