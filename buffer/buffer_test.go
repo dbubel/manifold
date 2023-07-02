@@ -1,259 +1,113 @@
 package buffer
 
 import (
-	"bytes"
-	"context"
-	"math/rand"
-	"sort"
-	"sync"
 	"testing"
 	"time"
 )
 
-func TestCircularBuffer_Read(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
+// chat gippity test
+func TestCircularBuffer(t *testing.T) {
+	// Create input and output channels
+	inputChannel := make(chan []byte)
+	outputChannel := make(chan []byte)
 
-	cb.Write([]uint8{1})
-	cb.Write([]uint8{2})
-	cb.Write([]uint8{3})
+	// Create a new circular buffer
+	cb := NewBuffer(inputChannel, outputChannel)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	val := cb.Read(ctx)
-	if !bytes.Equal(val, []uint8{1}) {
-		t.Errorf("Expected %d, but got %d", []uint8{1}, val)
+	// Input some data into the circular buffer
+	data := []byte{1, 2, 3}
+	inputChannel <- data
+
+	// Wait for a short time to allow the circular buffer to process the input
+	time.Sleep(100 * time.Millisecond)
+
+	// Check if the data is correctly stored in the circular buffer
+	if cb.head == nil || cb.tail == nil || cb.len != 1 {
+		t.Errorf("Expected circular buffer length to be 1, but got %d", cb.len)
 	}
 
-	val = cb.Read(ctx)
-	if !bytes.Equal(val, []uint8{2}) {
-		t.Errorf("Expected %d, but got %d", []uint8{2}, val)
+	// Output the data from the circular buffer
+	outputData := <-outputChannel
+
+	// Check if the output data matches the input data
+	if len(outputData) != len(data) {
+		t.Errorf("Expected output data length to be %d, but got %d", len(data), len(outputData))
 	}
 
-	val = cb.Read(ctx)
-	if !bytes.Equal(val, []uint8{3}) {
-		t.Errorf("Expected %d, but got %d", []uint8{3}, val)
-	}
-}
-
-func TestCircularBuffer_Write(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-
-	cb.Write([]byte{1})
-	cb.Write([]byte{2})
-	cb.Write([]byte{3})
-
-	if !bytes.Equal(cb.head.data, []byte{1}) {
-		t.Errorf("Expected head data to be 1, but got %v", cb.head.data)
-	}
-
-	if !bytes.Equal(cb.tail.data, []byte{3}) {
-		t.Errorf("Expected tail data to be 3, but got %v", cb.tail.data)
+	for i := 0; i < len(data); i++ {
+		if outputData[i] != data[i] {
+			t.Errorf("Expected output data at index %d to be %d, but got %d", i, data[i], outputData[i])
+		}
 	}
 }
 
-func TestCircularBuffer_ReadAndWrite(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
+// chat gippity test
+func TestCircularBufferMultipleInputs(t *testing.T) {
+	// Create input and output channels
+	inputChannel := make(chan []byte)
+	outputChannel := make(chan []byte)
 
-	cb.Write([]byte{1})
-	cb.Write([]byte{2})
-	cb.Read(ctx)
-	cb.Write([]byte{3})
-	cb.Write([]byte{4})
+	// Create a new circular buffer
+	cb := NewBuffer(inputChannel, outputChannel)
 
-	val := cb.Read(ctx)
-	if !bytes.Equal(val, []byte{2}) {
-		t.Errorf("Expected 2, but got %v", val)
+	// Input multiple data into the circular buffer
+	data1 := []byte{1, 2, 3}
+	data2 := []byte{4, 5, 6}
+	data3 := []byte{7, 8, 9}
+	inputChannel <- data1
+	inputChannel <- data2
+	inputChannel <- data3
+
+	// Wait for a short time to allow the circular buffer to process the inputs
+	time.Sleep(100 * time.Millisecond)
+
+	// Check if the data is correctly stored in the circular buffer
+	if cb.len != 3 {
+		t.Errorf("Expected circular buffer length to be 3, but got %d", cb.len)
 	}
 
-	val = cb.Read(ctx)
-	if !bytes.Equal(val, []byte{3}) {
-		t.Errorf("Expected 3, but got %v", val)
+	// Output the data from the circular buffer
+	outputData1 := <-outputChannel
+	outputData2 := <-outputChannel
+	outputData3 := <-outputChannel
+
+	// Check if the output data matches the input data
+	checkOutputData(t, data1, outputData1, 1)
+	checkOutputData(t, data2, outputData2, 2)
+	checkOutputData(t, data3, outputData3, 3)
+}
+
+func checkOutputData(t *testing.T, expected, actual []byte, index int) {
+	if len(actual) != len(expected) {
+		t.Errorf("Expected output data length to be %d at index %d, but got %d",
+			len(expected), index, len(actual))
 	}
 
-	val = cb.Read(ctx)
-	if !bytes.Equal(val, []byte{4}) {
-		t.Errorf("Expected 4, but got %v", val)
+	for i := 0; i < len(expected); i++ {
+		if actual[i] != expected[i] {
+			t.Errorf("Expected output data at index %d to be %d, but got %d",
+				i, expected[i], actual[i])
+		}
 	}
 }
 
-func TestCircularBuffer_ReadBeforeWrite(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	go func() {
-		time.Sleep(time.Millisecond * 100)
-		cb.Write([]byte{1})
-	}()
+func BenchmarkCircularBufferInputOutput(b *testing.B) {
+	// Create input and output channels
+	inputChannel := make(chan []byte)
+	outputChannel := make(chan []byte)
 
-	val := cb.Read(ctx)
-	if !bytes.Equal(val, []byte{1}) {
-		t.Errorf("Expected 1, but got %v", val)
-	}
-}
+	// Create a new circular buffer
+	cb := NewBuffer(inputChannel, outputChannel)
 
-//func TestCircularBuffer_Len(t *testing.T) {
-//	cb := NewBuffer()
-//	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-//	defer cancel()
-//
-//	cb.Write([]byte{1})
-//	cb.Write([]byte{1})
-//	cb.Write([]byte{1})
-//	cb.Read(ctx)
-//	t.Log(cb.Len(ctx))
-//	t.Log(cb.Len(ctx))
-//	t.Log(cb.Len(ctx))
-//	t.Log(cb.Len(ctx))
-//
-//	cb.Read(ctx)
-//	cb.Read(ctx)
-//	cb.Read(ctx)
-//	cb.Read(ctx)
-//	t.Log(cb.Len(ctx))
-//
-//	//cb.Read(ctx)
-//	//t.Log(cb.Length())
-//	//cb.Read(ctx)
-//	//t.Log(cb.Length())
-//	//cb.Read(ctx)
-//	//time.Sleep(time.Millisecond * 1000)
-//
-//}
-
-//func TestCircularBuffer_LenEmpty(t *testing.T) {
-//	cb := NewBuffer()
-//	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-//	defer cancel()
-//
-//	//cb.Write([]byte{1})
-//	//cb.Write([]byte{1})
-//	//cb.Write([]byte{1})
-//	//cb.Write([]byte{1})
-//	//cb.Read(ctx)
-//	t.Log(cb.Len(ctx))
-//}
-
-func TestCircularBuffer_ReadTimeout(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	cb.Write([]byte{1})
-	cb.Write([]byte{2})
-	cb.Read(ctx)
-	cb.Read(ctx)
-
-	val := cb.Read(ctx)
-	if val != nil {
-		t.Errorf("Expected nil, but got %v", val)
-	}
-}
-
-func BenchmarkQueue(b *testing.B) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Seed the random number generator
-	rand.Seed(time.Now().UnixNano())
-
-	// Write random slices of bytes
+	// Run the benchmark
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		value := make([]uint8, rand.Intn(1000))
-		rand.Read(value)
-		cb.Write(value)
+		data := []byte{byte(i % 256)} // Generate random data
+		cb.inputChannel <- data
+		<-cb.outputChannel
 	}
+	b.StopTimer()
 
-	// Dequeue all elements
-	for i := 0; i < b.N; i++ {
-		cb.Read(ctx)
-	}
-}
-
-func TestCircularBuffer_ConcurrentReadWrite(t *testing.T) {
-	in, out := make(chan []byte), make(chan []byte)
-	cb := NewBuffer(in, out)
-	t.Run("concurrent read write, write first", func(t *testing.T) {
-		wg := sync.WaitGroup{}
-		var mu sync.Mutex
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-
-		for i := 0; i < 100; i++ {
-			go func(a int) {
-				wg.Add(1)
-				cb.Write([]uint8{uint8(a)})
-			}(i)
-		}
-
-		var res []uint8
-		for i := 0; i < 100; i++ {
-			go func() {
-				mu.Lock()
-				defer mu.Unlock()
-				res = append(res, cb.Read(ctx)...)
-				wg.Done()
-			}()
-		}
-
-		wg.Wait()
-
-		sort.Slice(res, func(i, j int) bool {
-			return res[i] < res[j]
-		})
-
-		// verify that the list res contains all the numbers from 0 to 99
-		for i := 0; i < 100; i++ {
-			if res[i] != uint8(i) {
-				t.Errorf("Expected %d, but got %d", i, res[i])
-			}
-		}
-	})
-
-	t.Run("concurrent read write, read first", func(t *testing.T) {
-		wg := sync.WaitGroup{}
-		var mu sync.Mutex
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-
-		var res []uint8
-		for i := 0; i < 100; i++ {
-			go func() {
-				mu.Lock()
-				defer mu.Unlock()
-				res = append(res, cb.Read(ctx)...)
-				wg.Done()
-			}()
-		}
-
-		for i := 0; i < 100; i++ {
-			go func(a int) {
-				wg.Add(1)
-				cb.Write([]uint8{uint8(a)})
-			}(i)
-		}
-
-		wg.Wait()
-
-		sort.Slice(res, func(i, j int) bool {
-			return res[i] < res[j]
-		})
-
-		// verify that the list res contains all the numbers from 0 to 99
-		for i := 0; i < 100; i++ {
-			if res[i] != uint8(i) {
-				t.Errorf("Expected %d, but got %d", i, res[i])
-			}
-		}
-	})
+	// Close the input channel
+	close(cb.inputChannel)
 }

@@ -31,6 +31,20 @@ func TestTopics_EnqueueDequeue(t *testing.T) {
 		}
 	})
 
+	//t.Run("test blocking dequeue", func(t *testing.T) {
+	//	topics := New()
+	//	topics.AddTopic(topicOne)
+	//	go func() {
+	//		time.Sleep(time.Millisecond * 100)
+	//		topics.Enqueue(topicOne, []byte("hello world"))
+	//	}()
+	//
+	//	val := topics.Dequeue(topicOne)
+	//	if string(val) != "hello world" {
+	//		t.Errorf("Expected: %v, got: %v", "hello world", string(val))
+	//	}
+	//})
+
 	t.Run("test multiple enqueue dequeue", func(t *testing.T) {
 		topics := New()
 		topics.AddTopic(topicOne)
@@ -79,7 +93,6 @@ func TestTopics_EnqueueDequeue(t *testing.T) {
 		wg.Wait()
 
 		var results sync.Map
-		//var m sync.Mutex
 
 		for i := 0; i < 100; i++ {
 			go func(a int) {
@@ -98,19 +111,17 @@ func TestTopics_EnqueueDequeue(t *testing.T) {
 		allPresent := true
 
 		for i := 0; i < 100; i++ {
-			key := fmt.Sprintf("hello world %d", i)
+			_ = fmt.Sprintf("hello world %d", i)
 			_, found := results.Load(i)
 			if !found {
-				fmt.Println(key)
 				allPresent = false
 				break
 			}
 		}
 
-		if allPresent {
-			fmt.Println("All strings found in the sync map")
-		} else {
-			fmt.Println("Some strings are missing from the sync map")
+		if !allPresent {
+			t.Error("Some strings are missing from the sync map")
+			return
 		}
 	})
 }

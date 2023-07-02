@@ -1,7 +1,6 @@
 package buffer
 
 import (
-	"context"
 	"sync"
 )
 
@@ -60,21 +59,22 @@ func (cb *DoublyLinkedd) run() {
 	}
 }
 
-func (cb *DoublyLinkedd) Write(val []uint8) {
-	cb.inputChannel <- val
-}
+//
+//func (cb *DoublyLinkedd) Write(val []uint8) {
+//	cb.inputChannel <- val
+//}
 
-func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
-	return <-cb.outputChannel
-	//timer := time.NewTicker(time.Second)
-	//select {
-	//case item := <-cb.outputChannel:
-	//	return item
-	//case <-timer.C:
-	//	fmt.Println("cancelled")
-	//	return nil
-	//}
-}
+//func (cb *DoublyLinkedd) Read(ctx context.Context) []uint8 {
+//	return <-cb.outputChannel
+//	//timer := time.NewTicker(time.Second)
+//	//select {
+//	//case item := <-cb.outputChannel:
+//	//	return item
+//	//case <-timer.C:
+//	//	fmt.Println("cancelled")
+//	//	return nil
+//	//}
+//}
 
 //func (cb *DoublyLinkedd) Len(ctx context.Context) int {
 //	//timer := time.NewTimer(1 * time.Second)
