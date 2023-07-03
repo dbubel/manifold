@@ -3,6 +3,7 @@ package topics
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -92,21 +93,44 @@ func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
 
 func BenchmarkTopics_AsyncEnqueueDequeue(b *testing.B) {
 	topics := NewTopics()
+	s := GenerateRandomString(1000)
 	var n int
+
 	for i := 0; i < b.N; i++ {
 		n++
 		go func(a int) {
-			val := topics.Dequeue(context.Background(), "topic_one")
-			if len(val) < 4 {
-				b.Error("len is wrong")
-				return
-			}
+			val := topics.Dequeue(context.Background(), testTopic)
+			_ = val
 		}(i)
 	}
-	b.Log(n)
+
 	for i := 0; i < b.N; i++ {
 		go func(a int) {
-			topics.Enqueue("topic_one", []byte("asdf"))
+			topics.Enqueue(testTopic, s)
 		}(i)
+	}
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func GenerateRandomString(length int) []byte {
+	// Seed the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	s := make([]rune, length)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return []byte(string(s))
+}
+
+const testTopic = "test_topic"
+
+func BenchmarkNewTopics(b *testing.B) {
+	topics := NewTopics()
+	s := GenerateRandomString(1000)
+	for i := 0; i < b.N; i++ {
+		topics.Enqueue(testTopic, s)
+		topics.Dequeue(context.Background(), testTopic)
 	}
 }

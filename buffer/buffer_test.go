@@ -32,6 +32,7 @@ func TestNewQueue(t *testing.T) {
 			go func(a int) {
 				val := topics.BlockingDequeue(context.Background())
 				results.Store(a, string(val))
+				wg.Done()
 			}(i)
 		}
 
@@ -39,16 +40,16 @@ func TestNewQueue(t *testing.T) {
 			go func(a int) {
 				wg.Add(1)
 				topics.Enqueue([]byte(fmt.Sprintf("hello world %d", a)))
-				wg.Done()
+
 			}(i)
 		}
 
 		wg.Wait()
 
-		time.Sleep(time.Second)
-		results.Range(func(key, value any) bool {
-			return true
-		})
+		time.Sleep(time.Millisecond * 100)
+		//results.Range(func(key, value any) bool {
+		//	return true
+		//})
 
 		// Check if all expected strings are present
 		allPresent := true

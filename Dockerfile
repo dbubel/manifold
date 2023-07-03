@@ -6,4 +6,4 @@ COPY ./dist/server .
 
 EXPOSE 50051
 
-CMD ["/app/server"]
+CMD ["/app/server","serve"]

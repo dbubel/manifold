@@ -21,8 +21,13 @@ message DequeueAck {
 }
 
 message Empty {}
+
 message StringList {
   map<string, int32> my_map = 1;
+}
+
+message Length {
+  int32 length = 1;
 }
 
 service Manifold {
@@ -31,4 +36,5 @@ service Manifold {
   rpc StreamDequeue (DequeueMsg) returns (stream DequeueAck);
   rpc StreamEnqueue (EnqueueMsg) returns (stream EnqueueAck);
   rpc ListTopics(Empty) returns (StringList) {}
+  rpc TopicLength(DequeueMsg) returns (Length) {}
 }
