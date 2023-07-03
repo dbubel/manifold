@@ -32,7 +32,6 @@ func NewBuffer(inputChannel, outputChannel chan []byte) *DoublyLinkedd {
 
 func (cb *DoublyLinkedd) run() {
 	for {
-		// this prevents the len function from not needing the sync lock.
 		if cb.head == nil {
 			val := <-cb.InputChannel
 			node := &Node{data: val}

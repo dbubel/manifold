@@ -5,9 +5,7 @@ type Topics struct {
 	input         chan TopicEnqueueWrapper
 	output        chan []byte
 	outputRequest chan string
-	//listTopicsReq chan struct{}
-	//listTopicsRes chan map[string]int
-	Topics map[string]*Topic
+	Topics        map[string]*Topic
 }
 
 func New() *Topics {
@@ -17,8 +15,6 @@ func New() *Topics {
 		input:         make(chan TopicEnqueueWrapper),
 		output:        make(chan []byte),
 		outputRequest: make(chan string),
-		//listTopicsReq: make(chan struct{}),
-		//listTopicsRes: make(chan map[string]int),
 	}
 
 	go t.run()
@@ -33,12 +29,6 @@ type TopicEnqueueWrapper struct {
 func (t *Topics) run() {
 	for {
 		select {
-		//case <-t.listTopicsReq:
-		//topicsList := make(map[string]int)
-		//for k,v:=range t.Topics{
-		//
-		//}
-		//t.listTopicsRes <- make(map[string]int)
 		case topicName := <-t.addTopic:
 			if _, ok := t.Topics[topicName]; !ok {
 				t.Topics[topicName] = newTopic(topicName)
@@ -47,21 +37,18 @@ func (t *Topics) run() {
 			if _, ok := t.Topics[val.TopicName]; !ok {
 				t.Topics[val.TopicName] = newTopic(val.TopicName)
 			}
+
 			t.Topics[val.TopicName].Enqueue(val.Data)
 		case topicName := <-t.outputRequest:
-			//if _, ok := t.Topics[topicName]; !ok {
-			//	t.addTopic <- topicName
-			//}
+			if _, ok := t.Topics[topicName]; !ok {
+				t.Topics[topicName] = newTopic(topicName)
+			}
+
 			x := t.Topics[topicName].Dequeue()
 			t.output <- x
 		}
 	}
 }
-
-//func (t *Topics) ListTopics() map[string]int {
-//	t.listTopicsReq <- struct{}{}
-//	return <-t.listTopicsRes
-//}
 
 func (t *Topics) AddTopic(topicName string) {
 	t.addTopic <- topicName
