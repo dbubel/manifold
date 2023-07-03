@@ -34,14 +34,12 @@ func (cb *DoublyLinkedd) run() {
 	for {
 		// this prevents the len function from not needing the sync lock.
 		if cb.head == nil {
-			//cb.LenChannel <- 0
 			val := <-cb.InputChannel
 			node := &Node{data: val}
 			cb.head, cb.tail = node, node
 			cb.len++
 		} else {
 			select {
-			//case cb.LenChannel <- cb.len:
 			case val := <-cb.InputChannel:
 				node := &Node{data: val, prev: cb.tail}
 				cb.tail.next = node
