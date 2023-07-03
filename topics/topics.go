@@ -1,13 +1,13 @@
 package topics
 
 import (
-	"fmt"
 	"sync"
 )
 
 type Topics struct {
 	addTopic      chan string
 	input         chan TopicEnqueueWrapper
+	backupInput   chan TopicEnqueueWrapper
 	output        chan []byte
 	outputRequest chan string
 	lenRequest    chan string
@@ -22,6 +22,7 @@ func New() *Topics {
 		Topics:        make(map[string]*Topic),
 		addTopic:      make(chan string),
 		input:         make(chan TopicEnqueueWrapper),
+		backupInput:   make(chan TopicEnqueueWrapper),
 		output:        make(chan []byte),
 		outputRequest: make(chan string),
 		lenRequest:    make(chan string),
@@ -53,16 +54,13 @@ func (t *Topics) run() {
 			}
 
 			t.Topics[val.TopicName].Enqueue(val.Data)
-
 		case topicName := <-t.outputRequest:
 			if _, ok := t.Topics[topicName]; !ok {
-				//t.Topics[topicName] = newTopic(topicName)
-
+				t.Topics[topicName] = newTopic(topicName)
 				val := <-t.input
-				fmt.Println(val)
-				//t.Topics[val.TopicName].Enqueue(val.Data)
-				fmt.Println("return nil")
-				t.output <- val.Data
+				t.Topics[topicName].inputChannel <- val.Data
+				x := <-t.Topics[topicName].outputChannel
+				t.output <- x
 			} else {
 				x := t.Topics[topicName].Dequeue()
 				t.output <- x

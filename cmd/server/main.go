@@ -1,8 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"github.com/dbubel/manifold/logging"
 	"github.com/dbubel/manifold/proto_files"
+	"github.com/dbubel/manifold/topics"
+	"time"
 )
 
 type ManifoldServerCmd struct {
@@ -23,6 +26,28 @@ type server struct {
 }
 
 func (c *ManifoldServerCmd) Run(args []string) int {
+	t := topics.New()
+	go func() {
+		time.Sleep(time.Second)
+		for i := 0; i < 10; i++ {
+			//fmt.Println("sending")
+			t.Enqueue("topicOne", []byte(fmt.Sprintf("hello world %d", i)))
+			//time.Sleep(time.Millisecond * 1)
+		}
+
+		//time.Sleep(time.Second)
+		//for i := 0; i < 10; i++ {
+		//	//fmt.Println("sending")
+		//	t.Enqueue("topicOne", []byte(fmt.Sprintf("hello world %d", i)))
+		//	//time.Sleep(time.Millisecond * 1)
+		//}
+	}()
+	//time.Sleep(time.Second)
+
+	for {
+		fmt.Println(string(t.Dequeue("topicOne")))
+	}
+	//topics.Dequeue(topicOne)
 	//grpcServer := grpc.NewServer()
 	//
 	//l := logging.New(logging.INFO)

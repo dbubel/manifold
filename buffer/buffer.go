@@ -1,6 +1,7 @@
 package buffer
 
 import (
+	"container/list"
 	"sync"
 )
 
@@ -20,6 +21,7 @@ type DoublyLinkedd struct {
 }
 
 func NewBuffer(inputChannel, outputChannel chan []byte) *DoublyLinkedd {
+	list.New()
 	cb := &DoublyLinkedd{
 		InputChannel:  inputChannel,
 		OutputChannel: outputChannel,
