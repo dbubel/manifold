@@ -1,91 +1,45 @@
 package topics
 
 import (
+	"context"
+	"github.com/dbubel/manifold/buffer"
 	"sync"
 )
 
 type Topics struct {
-	addTopic      chan string
-	input         chan TopicEnqueueWrapper
-	backupInput   chan TopicEnqueueWrapper
-	output        chan []byte
-	outputRequest chan string
-	lenRequest    chan string
-	lenResult     chan int
-	Topics        map[string]*Topic
-	lock          sync.Mutex
-	Cond          *sync.Cond
+	topics map[string]*buffer.Queue
+	lock   sync.RWMutex
 }
 
-func New() *Topics {
-	t := Topics{
-		Topics:        make(map[string]*Topic),
-		addTopic:      make(chan string),
-		input:         make(chan TopicEnqueueWrapper),
-		backupInput:   make(chan TopicEnqueueWrapper),
-		output:        make(chan []byte),
-		outputRequest: make(chan string),
-		lenRequest:    make(chan string),
-		lenResult:     make(chan int),
+func NewTopics() *Topics {
+	return &Topics{
+		topics: make(map[string]*buffer.Queue),
 	}
-	t.Cond = sync.NewCond(&t.lock)
-
-	go t.run()
-	return &t
-}
-
-type TopicEnqueueWrapper struct {
-	TopicName string
-	Data      []byte
-}
-
-func (t *Topics) run() {
-	for {
-		select {
-		case topicName := <-t.lenRequest:
-			t.lenResult <- t.Topics[topicName].Len()
-		case topicName := <-t.addTopic:
-			if _, ok := t.Topics[topicName]; !ok {
-				t.Topics[topicName] = newTopic(topicName)
-			}
-		case val := <-t.input:
-			if _, ok := t.Topics[val.TopicName]; !ok {
-				t.Topics[val.TopicName] = newTopic(val.TopicName)
-			}
-
-			t.Topics[val.TopicName].Enqueue(val.Data)
-		case topicName := <-t.outputRequest:
-			if _, ok := t.Topics[topicName]; !ok {
-				t.Topics[topicName] = newTopic(topicName)
-				val := <-t.input
-				t.Topics[topicName].inputChannel <- val.Data
-				x := <-t.Topics[topicName].outputChannel
-				t.output <- x
-			} else {
-				x := t.Topics[topicName].Dequeue()
-				t.output <- x
-			}
-		}
-	}
-}
-
-func (t *Topics) AddTopic(topicName string) {
-	t.addTopic <- topicName
 }
 
 func (t *Topics) Enqueue(topicName string, data []byte) {
-	t.input <- TopicEnqueueWrapper{
-		TopicName: topicName,
-		Data:      data,
+	t.lock.Lock()
+	if _, ok := t.topics[topicName]; !ok {
+		t.topics[topicName] = buffer.NewQueue()
 	}
+	t.lock.Unlock()
+	t.topics[topicName].Enqueue(data)
+}
+
+func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+	t.lock.Lock()
+	if _, ok := t.topics[topicName]; !ok {
+		t.topics[topicName] = buffer.NewQueue()
+	}
+	t.lock.Unlock()
+	return t.topics[topicName].BlockingDequeue(ctx)
 }
 
 func (t *Topics) Len(topicName string) int {
-	t.lenRequest <- topicName
-	return <-t.lenResult
-}
-
-func (t *Topics) Dequeue(topicName string) []byte {
-	t.outputRequest <- topicName
-	return <-t.output
+	t.lock.Lock()
+	if _, ok := t.topics[topicName]; !ok {
+		t.topics[topicName] = buffer.NewQueue()
+	}
+	t.lock.Unlock()
+	return t.topics[topicName].Len()
 }

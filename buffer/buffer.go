@@ -1,67 +1,69 @@
 package buffer
 
 import (
-	"container/list"
+	"context"
+
 	"sync"
 )
 
-type Node struct {
-	data []uint8
-	prev *Node
-	next *Node
+type Queue struct {
+	list *List
+	lock sync.Mutex
+	Cond *sync.Cond
 }
 
-type DoublyLinkedd struct {
-	InputChannel  chan []uint8
-	OutputChannel chan []uint8
-	head          *Node
-	tail          *Node
-	len           int
-	m             sync.RWMutex
+func NewQueue() *Queue {
+	q := &Queue{
+		list: New(),
+	}
+	q.Cond = sync.NewCond(&q.lock)
+	return q
 }
 
-func NewBuffer(inputChannel, outputChannel chan []byte) *DoublyLinkedd {
-	list.New()
-	cb := &DoublyLinkedd{
-		InputChannel:  inputChannel,
-		OutputChannel: outputChannel,
-		len:           0,
+func (q *Queue) Enqueue(value []uint8) {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	q.list.PushBack(value)
+	q.Cond.Signal()
+}
+
+func (q *Queue) Dequeue() []uint8 {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	if q.list.Len() == 0 {
+		return nil
 	}
 
-	go cb.run()
-	return cb
+	element := q.list.Front()
+	q.list.Remove(element)
+
+	return element.Value
 }
 
-func (cb *DoublyLinkedd) run() {
-	for {
-		if cb.head == nil {
-			val := <-cb.InputChannel
-			node := &Node{data: val}
-			cb.head, cb.tail = node, node
-			cb.len++
-		} else {
-			select {
-			case val := <-cb.InputChannel:
-				node := &Node{data: val, prev: cb.tail}
-				cb.tail.next = node
-				cb.tail = node
-				cb.len++
-			case cb.OutputChannel <- cb.head.data:
-				if cb.head == cb.tail {
-					cb.head, cb.tail = nil, nil
-				} else {
-					cb.head = cb.head.next
-					cb.head.prev = nil
-				}
-				cb.len--
-			}
-		}
+func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	for q.list.Len() == 0 {
+		q.Cond.Wait()
 	}
+
+	if ctx.Err() != nil {
+		return nil
+	}
+
+	element := q.list.Front()
+	val := element.Value
+	q.list.Remove(element)
+
+	return val
 }
 
-func (cb *DoublyLinkedd) Len() int {
-	// TODO:(dbubel) figure out a way to do this with a channel
-	cb.m.RLock()
-	defer cb.m.RUnlock()
-	return cb.len
+func (q *Queue) Len() int {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	return q.list.Len()
 }

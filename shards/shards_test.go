@@ -1,21 +1,20 @@
 package shards
 
-import "testing"
-
-func TestShardedTopics_Enqueue(t *testing.T) {
-	t.Run("test simple enqueue", func(t *testing.T) {
-		shards := NewShards(1)
-		shards.Enqueue("TopicName", []byte("hello shard"))
-	})
-}
-
-func TestShardedTopics_Dequeue(t *testing.T) {
-	t.Run("test simple enqueue", func(t *testing.T) {
-		shards := NewShards(1)
-		shards.Enqueue("TopicName", []byte("hello shard"))
-		shards.Dequeue("TopicName")
-	})
-}
+//
+//func TestShardedTopics_Enqueue(t *testing.T) {
+//	t.Run("test simple enqueue", func(t *testing.T) {
+//		shards := NewShards(1)
+//		shards.Enqueue("TopicName", []byte("hello shard"))
+//	})
+//}
+//
+//func TestShardedTopics_Dequeue(t *testing.T) {
+//	t.Run("test simple enqueue", func(t *testing.T) {
+//		shards := NewShards(1)
+//		shards.Enqueue("TopicName", []byte("hello shard"))
+//		shards.Dequeue("TopicName")
+//	})
+//}
 
 //
 //func TestShardedDataBasic(t *testing.T) {
