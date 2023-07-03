@@ -31,19 +31,19 @@ func TestTopics_EnqueueDequeue(t *testing.T) {
 		}
 	})
 
-	//t.Run("test blocking dequeue", func(t *testing.T) {
-	//	topics := New()
-	//	topics.AddTopic(topicOne)
-	//	go func() {
-	//		time.Sleep(time.Millisecond * 100)
-	//		topics.Enqueue(topicOne, []byte("hello world"))
-	//	}()
-	//
-	//	val := topics.Dequeue(topicOne)
-	//	if string(val) != "hello world" {
-	//		t.Errorf("Expected: %v, got: %v", "hello world", string(val))
-	//	}
-	//})
+	t.Run("test blocking dequeue", func(t *testing.T) {
+		topics := New()
+		//topics.AddTopic(topicOne)
+		go func() {
+			time.Sleep(time.Millisecond * 1000)
+			topics.Enqueue(topicOne, []byte("hello world"))
+		}()
+
+		val := topics.Dequeue(topicOne)
+		if string(val) != "hello world" {
+			t.Errorf("Expected: %v, got: %v", "hello world", string(val))
+		}
+	})
 
 	t.Run("test multiple enqueue dequeue", func(t *testing.T) {
 		topics := New()
