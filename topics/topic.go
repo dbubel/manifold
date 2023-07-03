@@ -4,12 +4,12 @@ import "github.com/dbubel/manifold/buffer"
 
 type Topic struct {
 	Name  string
-	Queue *buffer.DoublyLinkedd
+	Queue *buffer.Queue
 }
 
 func newTopic(name string) *Topic {
 	return &Topic{
 		Name:  name,
-		Queue: buffer.NewBuffer(),
+		Queue: buffer.NewQueue(),
 	}
 }

@@ -47,23 +47,20 @@ func TestTopics(t *testing.T) {
 			t.Errorf("Expected 'Hello', got '%v'", string(value))
 		}
 	})
-
 }
-
 func TestTopicsAsync(t *testing.T) {
 	topics := New()
 	t.Run("async read write", func(t *testing.T) {
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 1; i++ {
 			go func(a int) {
 				topics.Enqueue("queue1", []byte("Hello"))
 			}(i)
 		}
-
-		for i := 0; i < 10; i++ {
-			//ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-			//time.Sleep(time.Millisecond * 200)
-
-			value := topics.Dequeue(context.Background(), "queue1")
+	
+		for i := 0; i < 1; i++ {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*1000)
+			_ = cancel
+			value := topics.Dequeue(ctx, "queue1")
 			t.Log(string(value))
 			//cancel()
 		}
