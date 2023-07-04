@@ -28,19 +28,19 @@ func (q *Queue) Enqueue(value []uint8) {
 	q.Cond.Signal()
 }
 
-func (q *Queue) Dequeue() []uint8 {
-	q.lock.Lock()
-	defer q.lock.Unlock()
-
-	if q.list.Len() == 0 {
-		return nil
-	}
-
-	element := q.list.Front()
-	q.list.Remove(element)
-
-	return element.Value
-}
+//func (q *Queue) Dequeue() []uint8 {
+//	q.lock.Lock()
+//	defer q.lock.Unlock()
+//
+//	if q.list.Len() == 0 {
+//		return nil
+//	}
+//
+//	element := q.list.Front()
+//	q.list.Remove(element)
+//
+//	return element.Value
+//}
 
 func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
 	q.lock.Lock()

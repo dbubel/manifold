@@ -1,9 +1,11 @@
 package server
 
 import (
+	"github.com/dbubel/manifold/config"
 	"github.com/dbubel/manifold/logging"
 	"github.com/dbubel/manifold/proto_files"
 	"github.com/dbubel/manifold/topics"
+	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -26,9 +28,15 @@ type server struct {
 }
 
 func (c *ManifoldServerCmd) Run(args []string) int {
+	l := logging.New(logging.DEBUG)
+
+	var cfg config.Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		l.Error(err.Error())
+		return 0
+	}
 
 	grpcServer := grpc.NewServer()
-	l := logging.New(logging.DEBUG)
 	defer l.WithFields(map[string]interface{}{"port": ":50051"}).Info("server stopped")
 
 	lis, err := net.Listen("tcp", ":50051")
