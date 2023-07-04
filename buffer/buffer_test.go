@@ -46,12 +46,8 @@ func TestNewQueue(t *testing.T) {
 
 		wg.Wait()
 
-		time.Sleep(time.Millisecond * 100)
-		//results.Range(func(key, value any) bool {
-		//	return true
-		//})
+		//time.Sleep(time.Millisecond * 100)
 
-		// Check if all expected strings are present
 		allPresent := true
 
 		for i := 0; i < 100; i++ {

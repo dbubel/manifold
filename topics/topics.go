@@ -1,3 +1,48 @@
+package topics
+
+import (
+	"context"
+	"github.com/dbubel/manifold/buffer"
+	"sync"
+)
+
+type Topics struct {
+	topics map[string]*buffer.Queue
+	lock   sync.RWMutex
+}
+
+func NewTopics() *Topics {
+	return &Topics{
+		topics: make(map[string]*buffer.Queue),
+	}
+}
+
+func (t *Topics) Enqueue(topicName string, data []byte) {
+	topic := t.getOrCreateTopic(topicName)
+	topic.Enqueue(data)
+}
+
+func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+	topic := t.getOrCreateTopic(topicName)
+	return topic.BlockingDequeue(ctx)
+}
+
+func (t *Topics) Len(topicName string) int {
+	topic := t.getOrCreateTopic(topicName)
+	return topic.Len()
+}
+
+func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
+	t.lock.Lock()
+	queue, ok := t.topics[topicName]
+	if !ok {
+		queue = buffer.NewQueue()
+		t.topics[topicName] = queue
+	}
+	t.lock.Unlock()
+	return queue
+}
+
 //package topics
 //
 //import (
@@ -46,12 +91,12 @@
 //	for {
 //		select {
 //		case req := <-t.enqueue:
-//			t.getOrCreateQueue(req.topicName).Enqueue(req.data)
+//			t.getOrCreateTopic(req.topicName).Enqueue(req.data)
 //		case req := <-t.dequeue:
-//			queue := t.getOrCreateQueue(req.topicName)
+//			queue := t.getOrCreateTopic(req.topicName)
 //			req.responseChan <- queue.BlockingDequeue(req.ctx)
 //		case req := <-t.lenReq:
-//			queue := t.getOrCreateQueue(req.topicName)
+//			queue := t.getOrCreateTopic(req.topicName)
 //			req.responseChan <- queue.Len()
 //		case <-t.shutdown:
 //			close(t.enqueue)
@@ -97,7 +142,7 @@
 //	close(t.shutdown)
 //}
 //
-//func (t *Topics) getOrCreateQueue(topicName string) *buffer.Queue {
+//func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
 //	queue, ok := t.topics[topicName]
 //	if !ok {
 //		queue = buffer.NewQueue()
@@ -105,49 +150,3 @@
 //	}
 //	return queue
 //}
-
-package topics
-
-import (
-	"context"
-	"github.com/dbubel/manifold/buffer"
-	"sync"
-)
-
-type Topics struct {
-	topics map[string]*buffer.Queue
-	lock   sync.RWMutex
-}
-
-func NewTopics() *Topics {
-	return &Topics{
-		topics: make(map[string]*buffer.Queue),
-	}
-}
-
-func (t *Topics) Enqueue(topicName string, data []byte) {
-	t.lock.Lock()
-	if _, ok := t.topics[topicName]; !ok {
-		t.topics[topicName] = buffer.NewQueue()
-	}
-	t.lock.Unlock()
-	t.topics[topicName].Enqueue(data)
-}
-
-func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
-	t.lock.Lock()
-	if _, ok := t.topics[topicName]; !ok {
-		t.topics[topicName] = buffer.NewQueue()
-	}
-	t.lock.Unlock()
-	return t.topics[topicName].BlockingDequeue(ctx)
-}
-
-func (t *Topics) Len(topicName string) int {
-	t.lock.Lock()
-	if _, ok := t.topics[topicName]; !ok {
-		t.topics[topicName] = buffer.NewQueue()
-	}
-	t.lock.Unlock()
-	return t.topics[topicName].Len()
-}
