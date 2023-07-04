@@ -58,11 +58,11 @@ func (q *Queue) Enqueue(value []uint8) {
 	q.enqueue <- value
 }
 
-func (q *Queue) Dequeue() []uint8 {
-	responseChan := make(chan []uint8)
-	q.dequeue <- responseChan
-	return <-responseChan
-}
+//func (q *Queue) Dequeue() []uint8 {
+//	responseChan := make(chan []uint8)
+//	q.dequeue <- responseChan
+//	return <-responseChan
+//}
 
 func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
 	responseChan := make(chan []uint8)

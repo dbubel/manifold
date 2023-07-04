@@ -11,12 +11,9 @@ type MClient struct {
 }
 
 func NewManifoldClient(host string) (*MClient, error) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
+	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
 	if err != nil {
 		return nil, err
 	}
-
-	x := MClient{proto.NewManifoldClient(conn)}
-
-	return &x, nil
+	return &MClient{proto.NewManifoldClient(conn)}, nil
 }

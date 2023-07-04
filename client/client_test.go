@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewManifoldClient_Enqueue(t *testing.T) {
-	client, err := NewManifoldClient("")
+	client, err := NewManifoldClient("localhost:50051")
 	if err != nil {
 		t.Error("error making client", err.Error())
 		return

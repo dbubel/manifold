@@ -40,7 +40,6 @@ func TestNewQueue(t *testing.T) {
 			go func(a int) {
 				wg.Add(1)
 				topics.Enqueue([]byte(fmt.Sprintf("hello world %d", a)))
-
 			}(i)
 		}
 
