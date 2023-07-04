@@ -70,12 +70,3 @@ func TestNewQueue(t *testing.T) {
 		}
 	})
 }
-
-func BenchmarkOldQueue(b *testing.B) {
-	q := NewQueue()
-	for i := 0; i < b.N; i++ {
-		q.Enqueue([]byte(fmt.Sprintf("hello %d", i)))
-		val := q.Dequeue()
-		_ = val
-	}
-}
