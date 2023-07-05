@@ -1,119 +1,116 @@
 package shards
 
-import (
-	"crypto/rand"
-	"github.com/dbubel/manifold/topics"
-	"hash/fnv"
-)
-
-type Shard struct {
-	queues topics.Topics
-}
-
-type ShardedTopics struct {
-	shards    map[uint32]*Shard
-	NumShards uint32
-}
-
-//func (s *ShardedTopics) List() {
-//	for k, v := range s.shards {
-//		for x, y := range v.queues.List() {
-//			fmt.Println(k, v, x, y)
+//
+//type ShardedTopics struct {
+//	shards    map[uint32]*topics.Topics
+//	input     chan Wrapper
+//	outputReq chan string
+//	output    chan []byte
+//	NumShards uint32
+//}
+//
+//func NewShards(shardNum uint32) *ShardedTopics {
+//	sd := &ShardedTopics{
+//		NumShards: shardNum,
+//		input:     make(chan Wrapper),
+//		output:    make(chan []byte),
+//		outputReq: make(chan string),
+//		shards:    make(map[uint32]*topics.Topics),
+//	}
+//
+//	var i uint32
+//	for i = 0; i < shardNum; i++ {
+//		sd.shards[i] = topics.New()
+//	}
+//	go sd.run()
+//	return sd
+//}
+//
+//type Wrapper struct {
+//	TopicName string
+//	Data      []byte
+//}
+//
+//func (t *ShardedTopics) run() {
+//	for {
+//		select {
+//		case val := <-t.input:
+//			b, _ := generateRandomBytes(20)
+//			n, _ := t.GetShardNum(b)
+//			fmt.Println("shard num in", n)
+//			t.shards[n].Enqueue(val.TopicName, val.Data)
+//		case topicName := <-t.outputReq:
+//			b, _ := generateRandomBytes(20)
+//			n, _ := t.GetShardNum(b)
+//			fmt.Println("shard num out", n)
+//			a := t.shards[n].Dequeue(topicName)
+//			fmt.Println("AAA", a)
+//			t.output <- a
 //		}
 //	}
 //}
-
-func NewShardedTopics(shardNum uint32) *ShardedTopics {
-	sd := &ShardedTopics{
-		NumShards: shardNum,
-		shards:    make(map[uint32]*Shard),
-	}
-
-	var i uint32
-	for i = 0; i < shardNum; i++ {
-		sd.shards[i] = &Shard{
-			queues: make(topics.Topics),
-		}
-	}
-	return sd
-}
-
-func generateRandomBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	return b, err
-}
-
-func (d *ShardedTopics) GetShard(key []byte) (*Shard, error) {
-	hasher := fnv.New32a()
-	_, err := hasher.Write(key)
-	if err != nil {
-		return nil, err
-	}
-	shardID := hasher.Sum32() % d.NumShards
-	return d.shards[shardID], nil
-}
-
-//
-//// Experimental
-//func (d *ShardedTopics) BlockingDequeue(ctx context.Context, topic string) ([]uint8, error) {
-//	x, err := generateRandomBytes(10)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	shard, err := d.GetShard(x)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	data, err := shard.queues.Dequeue(topic)
-//
-//	if err != nil && err.Error() == "queue is empty" {
-//		for _, v := range d.shards {
-//			if i, _ := v.queues.Len(topic); i > 0 {
-//				data, err = v.queues.Dequeue(topic)
-//				break
-//			}
-//		}
-//	}
-//
-//	data, err = shard.queues.BlockingDequeue(ctx, topic)
-//
-//	return data, err
+//func generateRandomBytes(n int) ([]byte, error) {
+//	b := make([]byte, n)
+//	_, err := rand.Read(b)
+//	return b, err
 //}
 //
-//func (d *ShardedTopics) Dequeue(topic string) ([]uint8, error) {
-//	x, err := generateRandomBytes(10)
+//func (d *ShardedTopics) GetShardNum(key []byte) (uint32, error) {
+//	var shardNum uint32
+//	hasher := fnv.New32a()
+//	_, err := hasher.Write(key)
 //	if err != nil {
-//		return nil, err
+//		return 0, err
 //	}
 //
-//	shard, err := d.GetShard(x)
-//	if err != nil {
-//		return nil, err
+//	shardNum = hasher.Sum32() % d.NumShards
+//	return shardNum, nil
+//}
+//
+//func (s *ShardedTopics) Enqueue(topicName string, data []byte) {
+//	s.input <- Wrapper{
+//		TopicName: topicName,
+//		Data:      data,
 //	}
+//}
 //
-//	data, err := shard.queues.Dequeue(topic)
+//func (s *ShardedTopics) Dequeue(topicName string) []byte {
+//	s.outputReq <- topicName
+//	fmt.Println("here")
+//	return <-s.output
+//}
+
 //
-//	if err != nil && err.Error() == "queue is empty" {
-//		for _, v := range d.shards {
-//			if i, _ := v.queues.Len(topic); i > 0 {
-//				data, err = v.queues.Dequeue(topic)
-//				break
+//func (d *ShardedTopics) Dequeue(ctx context.Context, topic string) []uint8 {
+//	var dataChan = make(chan []uint8, d.NumShards)
+//
+//	ctx, cancel := context.WithTimeout(ctx, time.Second)
+//	defer cancel()
+//	//fmt.Println("lenShards", len(d.shards))
+//	for i := range d.shards {
+//		go func(dChan chan []uint8, shard *Shard) {
+//			data := shard.topics.Dequeue(ctx, topic)
+//			if data != nil {
+//				//fmt.Println(shard.ID, "got data", string(data))
+//				dChan <- data
+//				//cancel()
 //			}
-//		}
+//		}(dataChan, d.shards[i])
 //	}
-//	return data, err
+//	//time.Sleep(time.Millisecond * 100)
+//
+//	return <-dataChan
 //}
 //
 //func (d *ShardedTopics) Enqueue(id string, value []byte) error {
-//	rnd, _ := generateRandomBytes(20)
+//	//fmt.Println("enqueue", id, string(value))
+//	rnd, _ := generateRandomBytes(200)
 //	shard, err := d.GetShard(rnd)
 //	if err != nil {
+//		fmt.Println("error getting shard", err)
 //		return err
 //	}
 //
-//	z := shard.queues.Enqueue(id, value)
-//	return z
+//	shard.topics.Enqueue(id, value)
+//	return nil
 //}

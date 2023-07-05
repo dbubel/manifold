@@ -24,6 +24,7 @@ const (
 	Manifold_StreamDequeue_FullMethodName = "/manifold.Manifold/StreamDequeue"
 	Manifold_StreamEnqueue_FullMethodName = "/manifold.Manifold/StreamEnqueue"
 	Manifold_ListTopics_FullMethodName    = "/manifold.Manifold/ListTopics"
+	Manifold_TopicLength_FullMethodName   = "/manifold.Manifold/TopicLength"
 )
 
 // ManifoldClient is the client API for Manifold service.
@@ -35,6 +36,7 @@ type ManifoldClient interface {
 	StreamDequeue(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (Manifold_StreamDequeueClient, error)
 	StreamEnqueue(ctx context.Context, in *EnqueueMsg, opts ...grpc.CallOption) (Manifold_StreamEnqueueClient, error)
 	ListTopics(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringList, error)
+	TopicLength(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (*Length, error)
 }
 
 type manifoldClient struct {
@@ -136,6 +138,15 @@ func (c *manifoldClient) ListTopics(ctx context.Context, in *Empty, opts ...grpc
 	return out, nil
 }
 
+func (c *manifoldClient) TopicLength(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (*Length, error) {
+	out := new(Length)
+	err := c.cc.Invoke(ctx, Manifold_TopicLength_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ManifoldServer is the server API for Manifold service.
 // All implementations must embed UnimplementedManifoldServer
 // for forward compatibility
@@ -145,6 +156,7 @@ type ManifoldServer interface {
 	StreamDequeue(*DequeueMsg, Manifold_StreamDequeueServer) error
 	StreamEnqueue(*EnqueueMsg, Manifold_StreamEnqueueServer) error
 	ListTopics(context.Context, *Empty) (*StringList, error)
+	TopicLength(context.Context, *DequeueMsg) (*Length, error)
 	mustEmbedUnimplementedManifoldServer()
 }
 
@@ -166,6 +178,9 @@ func (UnimplementedManifoldServer) StreamEnqueue(*EnqueueMsg, Manifold_StreamEnq
 }
 func (UnimplementedManifoldServer) ListTopics(context.Context, *Empty) (*StringList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTopics not implemented")
+}
+func (UnimplementedManifoldServer) TopicLength(context.Context, *DequeueMsg) (*Length, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TopicLength not implemented")
 }
 func (UnimplementedManifoldServer) mustEmbedUnimplementedManifoldServer() {}
 
@@ -276,6 +291,24 @@ func _Manifold_ListTopics_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Manifold_TopicLength_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DequeueMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManifoldServer).TopicLength(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Manifold_TopicLength_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManifoldServer).TopicLength(ctx, req.(*DequeueMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Manifold_ServiceDesc is the grpc.ServiceDesc for Manifold service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -294,6 +327,10 @@ var Manifold_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTopics",
 			Handler:    _Manifold_ListTopics_Handler,
+		},
+		{
+			MethodName: "TopicLength",
+			Handler:    _Manifold_TopicLength_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -1,9 +1,11 @@
 package server
 
 import (
+	"github.com/dbubel/manifold/config"
 	"github.com/dbubel/manifold/logging"
 	"github.com/dbubel/manifold/proto_files"
-	"github.com/dbubel/manifold/shards"
+	"github.com/dbubel/manifold/topics"
+	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -21,14 +23,20 @@ func (c *ManifoldServerCmd) Synopsis() string {
 
 type server struct {
 	proto.ManifoldServer
-	q *shards.ShardedTopics
+	t *topics.Topics
 	l *logging.Logger
 }
 
 func (c *ManifoldServerCmd) Run(args []string) int {
-	grpcServer := grpc.NewServer()
+	l := logging.New(logging.DEBUG)
 
-	l := logging.New(logging.INFO)
+	var cfg config.Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		l.Error(err.Error())
+		return 0
+	}
+
+	grpcServer := grpc.NewServer()
 	defer l.WithFields(map[string]interface{}{"port": ":50051"}).Info("server stopped")
 
 	lis, err := net.Listen("tcp", ":50051")
@@ -37,7 +45,7 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 	}
 
 	proto.RegisterManifoldServer(grpcServer, &server{
-		q: shards.NewShardedTopics(10),
+		t: topics.NewTopics(),
 		l: l,
 	})
 

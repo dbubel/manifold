@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dbubel/manifold/internal"
-	"github.com/dbubel/manifold/proto_files"
+	proto "github.com/dbubel/manifold/proto_files"
 )
 
 func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.EnqueueAck, error) {
@@ -15,8 +15,7 @@ func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.Enqueu
 
 	s.l.WithFields(map[string]interface{}{"topic": in.GetTopicName(), "dataLen": len(in.GetData())}).Debug("enqueue ok")
 
-	if err := s.q.Enqueue(in.GetTopicName(), in.GetData()); err != nil {
-		return &proto.EnqueueAck{}, err
-	}
+	s.t.Enqueue(in.GetTopicName(), in.GetData())
+
 	return &proto.EnqueueAck{Data: "OK"}, nil
 }

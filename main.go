@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/dbubel/manifold/cmd/server"
+	"github.com/dbubel/manifold/examples/mocks"
 	"github.com/dbubel/manifold/logging"
 	"github.com/mitchellh/cli"
 	"os"
@@ -15,6 +16,12 @@ func main() {
 	c.Commands = map[string]cli.CommandFactory{
 		"serve": func() (cli.Command, error) {
 			return &server.ManifoldServerCmd{}, nil
+		},
+		"consumer": func() (cli.Command, error) {
+			return &mocks.ConsumeCommand{}, nil
+		},
+		"producer": func() (cli.Command, error) {
+			return &mocks.ProduceCommand{}, nil
 		},
 	}
 

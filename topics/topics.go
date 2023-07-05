@@ -1,82 +1,154 @@
 package topics
 
+import (
+	"context"
+	"github.com/dbubel/manifold/buffer"
+	"github.com/dbubel/manifold/logging"
+	"sync"
+)
+
 type Topics struct {
-	Topics map[string]*Topic
+	topics map[string]*buffer.Queue
+	lock   sync.RWMutex
+	log    *logging.Logger
 }
 
-func New() *Topics {
+func NewTopics() *Topics {
 	return &Topics{
-		Topics: make(map[string]*Topic),
+		topics: make(map[string]*buffer.Queue),
 	}
 }
 
-func (t *Topics) AddTopic(name string) {
-	t.Topics[name] = newTopic(name)
+func (t *Topics) Enqueue(topicName string, data []byte) {
+	topic := t.getOrCreateTopic(topicName)
+	topic.Enqueue(data)
 }
 
-func (t *Topics) GetTopic(name string) *Topic {
-	if _, exists := t.Topics[name]; exists {
-		return t.Topics[name]
+func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+	topic := t.getOrCreateTopic(topicName)
+	return topic.BlockingDequeue(ctx)
+}
+
+func (t *Topics) Len(topicName string) int {
+	topic := t.getOrCreateTopic(topicName)
+	return topic.Len()
+}
+
+func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
+	t.lock.Lock()
+	queue, ok := t.topics[topicName]
+	if !ok {
+		queue = buffer.NewQueue()
+		t.topics[topicName] = queue
 	}
-	return nil
+	t.lock.Unlock()
+	return queue
 }
 
-// Enqueue adds a value to the queue with the given id.
-func (t *Topics) Enqueue(id string, value []uint8) {
-	topic := t.GetTopic(id)
-	if topic == nil {
-		// Create a new queue if it doesn't exist yet
-		t.AddTopic(id)
-	}
-	topic = t.GetTopic(id)
-	topic.Queue.Write(value)
-}
-
-func (t *Topics) Dequeue(id string) []uint8 {
-	topic := t.GetTopic(id)
-	if topic == nil {
-		// Create a new queue if it doesn't exist yet
-		t.AddTopic(id)
-	}
-	topic = t.GetTopic(id)
-	return topic.Queue.Read()
-}
-
+//package topics
 //
-//func (t Topics) List() map[string]int32 {
-//	var m map[string]int32
-//	m = make(map[string]int32)
-//	for k, v := range t {
-//		m[k] = int32(v.Len())
-//	}
-//	return m
+//import (
+//	"context"
+//	"github.com/dbubel/manifold/buffer"
+//	"sync"
+//)
+//
+//type Topics struct {
+//	topics   map[string]*buffer.Queue
+//	enqueue  chan enqueueRequest
+//	dequeue  chan dequeueRequest
+//	lenReq   chan lenRequest
+//	shutdown chan struct{}
 //}
 //
-//func (t Topics) Dequeue(id string) ([]byte, error) {
-//	queue, ok := t[id]
-//	if !ok {
-//		// Create a new queue if it doesn't exist yet
-//		queue = q.NewQueue()
-//		t[id] = queue
-//	}
-//	return queue.Dequeue()
+//type enqueueRequest struct {
+//	topicName string
+//	data      []byte
 //}
 //
-//func (t Topics) BlockingDequeue(ctx context.Context, id string) ([]byte, error) {
-//	queue, ok := t[id]
-//	if !ok {
-//		// Create a new queue if it doesn't exist yet
-//		queue = q.NewQueue()
-//		t[id] = queue
-//	}
-//	return queue.BlockingDequeue(ctx), nil
+//type dequeueRequest struct {
+//	topicName    string
+//	responseChan chan []byte
+//	ctx          context.Context
 //}
 //
-//func (t Topics) Len(id string) (int, error) {
-//	queue, ok := t[id]
-//	if !ok {
-//		// There is no queue with this id
-//		return 0, fmt.Errorf("queue does not exist")
+//type lenRequest struct {
+//	topicName    string
+//	responseChan chan int
+//}
+//
+//func NewTopics() *Topics {
+//	t := &Topics{
+//		topics:   make(map[string]*buffer.Queue),
+//		enqueue:  make(chan enqueueRequest),
+//		dequeue:  make(chan dequeueRequest),
+//		lenReq:   make(chan lenRequest),
+//		shutdown: make(chan struct{}),
 //	}
-//	return queue.Len(), nil
+//	go t.start()
+//	return t
+//}
+//
+//func (t *Topics) start() {
+//	for {
+//		select {
+//		case req := <-t.enqueue:
+//			t.getOrCreateTopic(req.topicName).Enqueue(req.data)
+//		case req := <-t.dequeue:
+//			queue := t.getOrCreateTopic(req.topicName)
+//			req.responseChan <- queue.BlockingDequeue(req.ctx)
+//		case req := <-t.lenReq:
+//			queue := t.getOrCreateTopic(req.topicName)
+//			req.responseChan <- queue.Len()
+//		case <-t.shutdown:
+//			close(t.enqueue)
+//			close(t.dequeue)
+//			close(t.lenReq)
+//			return
+//		}
+//	}
+//}
+//
+//func (t *Topics) Enqueue(topicName string, data []byte) {
+//	t.enqueue <- enqueueRequest{
+//		topicName: topicName,
+//		data:      data,
+//	}
+//}
+//
+//func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+//	responseChan := make(chan []byte)
+//	t.dequeue <- dequeueRequest{
+//		topicName:    topicName,
+//		responseChan: responseChan,
+//		ctx:          ctx,
+//	}
+//	select {
+//	case data := <-responseChan:
+//		return data
+//	case <-ctx.Done():
+//		return nil
+//	}
+//}
+//
+//func (t *Topics) Len(topicName string) int {
+//	responseChan := make(chan int)
+//	t.lenReq <- lenRequest{
+//		topicName:    topicName,
+//		responseChan: responseChan,
+//	}
+//	return <-responseChan
+//}
+//
+//func (t *Topics) Shutdown() {
+//	close(t.shutdown)
+//}
+//
+//func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
+//	queue, ok := t.topics[topicName]
+//	if !ok {
+//		queue = buffer.NewQueue()
+//		t.topics[topicName] = queue
+//	}
+//	return queue
 //}

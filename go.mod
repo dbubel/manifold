@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/golang/snappy v0.0.4
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/cli v1.1.5
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
