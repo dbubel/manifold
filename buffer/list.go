@@ -1,11 +1,13 @@
 package buffer
 
+import "time"
+
 type Element struct {
-	Value []uint8
-	//EnqueueTime time.Time
-	next *Element
-	prev *Element
-	list *List
+	Value       []uint8
+	EnqueueTime time.Time
+	next        *Element
+	prev        *Element
+	list        *List
 }
 
 type List struct {
@@ -76,7 +78,7 @@ func (l *List) insert(e, at *Element) *Element {
 }
 
 func (l *List) insertValue(v []uint8, at *Element) *Element {
-	return l.insert(&Element{Value: v}, at)
+	return l.insert(&Element{Value: v, EnqueueTime: time.Now()}, at)
 }
 
 func (l *List) remove(e *Element) *Element {

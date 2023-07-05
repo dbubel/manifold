@@ -24,7 +24,6 @@ func TestQueue_BlockingDequeue(t *testing.T) {
 func TestNewQueue(t *testing.T) {
 	t.Run("test async enqueue async dequeue", func(t *testing.T) {
 		topics := NewQueue()
-		//topics.AddTopic(topicOne)
 		var wg sync.WaitGroup
 		var results sync.Map
 
@@ -32,7 +31,7 @@ func TestNewQueue(t *testing.T) {
 			go func(a int) {
 				val := topics.BlockingDequeue(context.Background())
 				results.Store(a, string(val))
-				wg.Done()
+				defer wg.Done()
 			}(i)
 		}
 

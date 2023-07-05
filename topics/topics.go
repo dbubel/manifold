@@ -3,12 +3,14 @@ package topics
 import (
 	"context"
 	"github.com/dbubel/manifold/buffer"
+	"github.com/dbubel/manifold/logging"
 	"sync"
 )
 
 type Topics struct {
 	topics map[string]*buffer.Queue
 	lock   sync.RWMutex
+	log    *logging.Logger
 }
 
 func NewTopics() *Topics {
