@@ -78,9 +78,10 @@ func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
 }
 
 func (q *Queue) Len() int {
-	responseChan := make(chan int)
-	q.lenReq <- responseChan
-	return <-responseChan
+	return q.list.len
+	//responseChan := make(chan int)
+	//q.lenReq <- responseChan
+	//return <-responseChan
 }
 
 func (q *Queue) Shutdown() {

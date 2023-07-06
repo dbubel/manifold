@@ -24,6 +24,11 @@ func (t *Topics) Enqueue(topicName string, data []byte) {
 	topic.Enqueue(data)
 }
 
+func (t *Topics) EnqueueHighPriority(topicName string, data []byte) {
+	topic := t.getOrCreateTopic(topicName)
+	topic.EnqueueHighPriority(data)
+}
+
 func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
 	topic := t.getOrCreateTopic(topicName)
 	return topic.BlockingDequeue(ctx)

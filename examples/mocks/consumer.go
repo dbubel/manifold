@@ -37,7 +37,7 @@ func (c *ConsumeCommand) Run(args []string) int {
 
 	x := echo.NewManifoldClient(conn)
 
-	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "test_topic"})
+	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "test2"})
 	if err != nil {
 		log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 	}
@@ -50,12 +50,12 @@ func (c *ConsumeCommand) Run(args []string) int {
 			// If the stream is closed, exit the loop
 			break
 		}
+
 		if err != nil {
 			log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 		}
+		fmt.Println(string(response.Data))
 		_ = response
-		// Use the streamed response
-		//fmt.Println(string(response.Data))
 	}
 
 	return 0

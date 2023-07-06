@@ -29,9 +29,9 @@ func TestNewQueue(t *testing.T) {
 
 		for i := 0; i < 100; i++ {
 			go func(a int) {
+				defer wg.Done()
 				val := topics.BlockingDequeue(context.Background())
 				results.Store(a, string(val))
-				defer wg.Done()
 			}(i)
 		}
 

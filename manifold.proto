@@ -3,9 +3,15 @@ syntax = "proto3";
 package manifold;
 option go_package = "./proto";
 
+enum Priority {
+  NORMAL = 0;
+  HIGH = 1;
+}
+
 message EnqueueMsg {
   string topicName = 1;
   bytes data = 2;
+  Priority priority = 3;
 }
 
 message EnqueueAck {
