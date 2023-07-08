@@ -2,20 +2,20 @@ package topics
 
 import (
 	"context"
-	"github.com/dbubel/manifold/buffer"
 	"github.com/dbubel/manifold/logging"
+	"github.com/dbubel/manifold/queue"
 	"sync"
 )
 
 type Topics struct {
-	topics map[string]*buffer.Queue
+	topics map[string]*queue.Queue
 	lock   sync.RWMutex
 	log    *logging.Logger
 }
 
 func NewTopics() *Topics {
 	return &Topics{
-		topics: make(map[string]*buffer.Queue),
+		topics: make(map[string]*queue.Queue),
 	}
 }
 
@@ -39,15 +39,15 @@ func (t *Topics) Len(topicName string) int {
 	return topic.Len()
 }
 
-func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
+func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {
 	t.lock.Lock()
-	queue, ok := t.topics[topicName]
+	q, ok := t.topics[topicName]
 	if !ok {
-		queue = buffer.NewQueue()
-		t.topics[topicName] = queue
+		q = queue.NewQueue()
+		t.topics[topicName] = q
 	}
 	t.lock.Unlock()
-	return queue
+	return q
 }
 
 //package topics

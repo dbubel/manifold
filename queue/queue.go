@@ -1,4 +1,4 @@
-package buffer
+package queue
 
 import (
 	"context"
@@ -57,6 +57,11 @@ func (q *Queue) start() {
 			return
 		}
 	}
+}
+
+// BatchedDequeue TODO:(dean) implement ability to dequeue batches of messages
+func (q *Queue) BatchedDequeue(ctx context.Context, n int) [][]uint8 {
+	return [][]uint8{}
 }
 
 func (q *Queue) Enqueue(value []uint8) {

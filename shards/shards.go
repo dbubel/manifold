@@ -1,17 +1,12 @@
 package shards
 
-import (
-	"github.com/dbubel/manifold/topics"
-	"hash/fnv"
-)
-
-type ShardedTopics struct {
-	shards    map[uint32]*topics.Topics
-	input     chan Wrapper
-	outputReq chan string
-	output    chan []byte
-	NumShards uint32
-}
+//type ShardedTopics struct {
+//	shards    map[uint32]*topics.Topics
+//	input     chan Wrapper
+//	outputReq chan string
+//	output    chan []byte
+//	NumShards uint32
+//}
 
 //	func NewShards(shardNum uint32) *ShardedTopics {
 //		sd := &ShardedTopics{
@@ -59,17 +54,17 @@ type ShardedTopics struct {
 //		_, err := rand.Read(b)
 //		return b, err
 //	}
-func (d *ShardedTopics) GetShardNum(key []byte) (uint32, error) {
-	var shardNum uint32
-	hasher := fnv.New32a()
-	_, err := hasher.Write(key)
-	if err != nil {
-		return 0, err
-	}
-
-	shardNum = hasher.Sum32() % d.NumShards
-	return shardNum, nil
-}
+//func (d *ShardedTopics) GetShardNum(key []byte) (uint32, error) {
+//	var shardNum uint32
+//	hasher := fnv.New32a()
+//	_, err := hasher.Write(key)
+//	if err != nil {
+//		return 0, err
+//	}
+//
+//	shardNum = hasher.Sum32() % d.NumShards
+//	return shardNum, nil
+//}
 
 //
 //func (s *ShardedTopics) Enqueue(topicName string, data []byte) {
