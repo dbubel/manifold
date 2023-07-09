@@ -13,9 +13,10 @@ type Topics struct {
 	log    *logging.Logger
 }
 
-func NewTopics() *Topics {
+func NewTopics(l *logging.Logger) *Topics {
 	return &Topics{
 		topics: make(map[string]*queue.Queue),
+		log:    l,
 	}
 }
 
@@ -37,6 +38,13 @@ func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
 func (t *Topics) Len(topicName string) int {
 	topic := t.getOrCreateTopic(topicName)
 	return topic.Len()
+}
+
+func (t *Topics) Shutdown() {
+	for k, r := range t.topics {
+		t.log.WithFields(map[string]interface{}{"topic": k}).Info("topic shutting down")
+		r.Shutdown()
+	}
 }
 
 func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {

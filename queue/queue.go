@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"fmt"
+	"time"
 )
 
 type Queue struct {
@@ -11,10 +13,14 @@ type Queue struct {
 	dequeue             chan chan []uint8
 	lenReq              chan chan int
 	lenResp             chan int
+	cancelFunc          context.CancelFunc
+	ctx                 context.Context
 	shutdown            chan struct{}
 }
 
 func NewQueue() *Queue {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	q := &Queue{
 		list:                New(),
 		enqueue:             make(chan []uint8),
@@ -22,13 +28,15 @@ func NewQueue() *Queue {
 		dequeue:             make(chan chan []uint8),
 		lenReq:              make(chan chan int),
 		lenResp:             make(chan int),
+		cancelFunc:          cancel,
 		shutdown:            make(chan struct{}),
 	}
-	go q.start()
+	go q.start(ctx)
 	return q
 }
 
-func (q *Queue) start() {
+func (q *Queue) start(ctx context.Context) {
+
 	for {
 		select {
 		case value := <-q.enqueueHighPriority:
@@ -48,12 +56,15 @@ func (q *Queue) start() {
 			}
 		case responseChan := <-q.lenReq:
 			responseChan <- q.list.Len()
-		case <-q.shutdown:
+		case <-ctx.Done():
 			close(q.enqueue)
 			close(q.dequeue)
 			close(q.lenReq)
 			close(q.lenResp)
 			close(q.enqueueHighPriority)
+			fmt.Println("shutting down")
+			time.Sleep(time.Second * 10)
+			q.shutdown <- struct{}{}
 			return
 		}
 	}
@@ -90,7 +101,8 @@ func (q *Queue) Len() int {
 }
 
 func (q *Queue) Shutdown() {
-	close(q.shutdown)
+	q.cancelFunc()
+	<-q.shutdown
 }
 
 //package buffer

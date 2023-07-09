@@ -8,7 +8,11 @@ import (
 	"github.com/dbubel/manifold/topics"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
+	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -46,17 +50,43 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 		l.Error(err.Error())
 	}
 
-	proto.RegisterManifoldServer(grpcServer, &server{
-		t: topics.NewTopics(),
+	y := &server{
+		t: topics.NewTopics(l),
 		l: l,
-	})
+	}
+	proto.RegisterManifoldServer(grpcServer, y)
 
 	l.WithFields(map[string]interface{}{"port": ":50051"}).Info("server started")
 
-	if err := grpcServer.Serve(lis); err != nil {
-		l.Error(err.Error())
-	}
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			l.Error(err.Error())
+		}
+
+	}()
+	y.waitForShutdown(grpcServer)
+	//time.Sleep(time.Second)
 	return 0
+
+}
+
+func (s *server) waitForShutdown(server *grpc.Server) {
+	// Create a channel to receive the interrupt signal
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Block until a signal is received
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = ctx
+
+	server.GracefulStop()
+
+	s.t.Shutdown()
+	time.Sleep(time.Second * 3)
+	log.Println("Server gracefully stopped")
 }
 
 // UnaryInterceptor is a gRPC middleware that logs the duration of each unary RPC call.
