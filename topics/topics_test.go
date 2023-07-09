@@ -3,6 +3,7 @@ package topics
 import (
 	"context"
 	"fmt"
+	"github.com/dbubel/manifold/logging"
 	"math/rand"
 	"sync"
 	"testing"
@@ -12,7 +13,7 @@ import (
 func TestTopics_EnqueueDequeueSimple(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	topic := NewTopics()
+	topic := NewTopics(logging.New(logging.DEBUG))
 
 	topic.Enqueue("test", []byte("hello test"))
 	data := topic.Dequeue(ctx, "test")
@@ -25,7 +26,7 @@ func TestTopics_EnqueueDequeueSimple(t *testing.T) {
 func TestTopics_EnqueueDequeueMultipleTopics(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	topic := NewTopics()
+	topic := NewTopics(logging.New(logging.DEBUG))
 
 	topic.Enqueue("test", []byte("hello test"))
 	data := topic.Dequeue(ctx, "test")
@@ -43,7 +44,7 @@ func TestTopics_EnqueueDequeueMultipleTopics(t *testing.T) {
 }
 
 func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
-	topics := NewTopics()
+	topics := NewTopics(logging.New(logging.DEBUG))
 	var wg sync.WaitGroup
 	var results sync.Map
 
@@ -92,7 +93,7 @@ func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
 }
 
 func BenchmarkTopics_AsyncEnqueueDequeue(b *testing.B) {
-	topics := NewTopics()
+	topics := NewTopics(logging.New(logging.DEBUG))
 	s := GenerateRandomString(1000)
 	var n int
 
@@ -127,7 +128,7 @@ func GenerateRandomString(length int) []byte {
 const testTopic = "test_topic"
 
 func BenchmarkNewTopics(b *testing.B) {
-	topics := NewTopics()
+	topics := NewTopics(logging.New(logging.DEBUG))
 	s := GenerateRandomString(1000)
 	for i := 0; i < b.N; i++ {
 		topics.Enqueue(testTopic, s)
