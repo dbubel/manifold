@@ -3,12 +3,11 @@ package server
 import (
 	"context"
 	"github.com/dbubel/manifold/config"
-	"github.com/dbubel/manifold/logging"
+	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/dbubel/manifold/proto_files"
 	"github.com/dbubel/manifold/topics"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -85,8 +84,7 @@ func (s *server) waitForShutdown(server *grpc.Server) {
 	server.GracefulStop()
 
 	s.t.Shutdown()
-	time.Sleep(time.Second * 3)
-	log.Println("Server gracefully stopped")
+
 }
 
 // UnaryInterceptor is a gRPC middleware that logs the duration of each unary RPC call.
@@ -103,15 +101,3 @@ func xxx(l *logging.Logger) func(ctx context.Context, req interface{}, info *grp
 		return resp, err
 	}
 }
-
-// z := func a(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-//	start := time.Now()
-//
-//	// Call the handler to process the RPC request
-//	resp, err := handler(ctx, req)
-//
-//	duration := time.Since(start)
-//	log.Printf("Unary RPC call %s took %s", info.FullMethod, duration)
-//
-//	return resp, err
-//}

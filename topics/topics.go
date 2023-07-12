@@ -2,7 +2,7 @@ package topics
 
 import (
 	"context"
-	"github.com/dbubel/manifold/logging"
+	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/dbubel/manifold/queue"
 	"sync"
 )
@@ -51,7 +51,7 @@ func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {
 	t.lock.Lock()
 	q, ok := t.topics[topicName]
 	if !ok {
-		q = queue.NewQueue()
+		q = queue.NewQueue(t.log)
 		t.topics[topicName] = q
 	}
 	t.lock.Unlock()

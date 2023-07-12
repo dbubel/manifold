@@ -3,7 +3,7 @@ package topics
 import (
 	"context"
 	"fmt"
-	"github.com/dbubel/manifold/logging"
+	"github.com/dbubel/manifold/pkg/logging"
 	"math/rand"
 	"sync"
 	"testing"

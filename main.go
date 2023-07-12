@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/dbubel/manifold/cmd/server"
 	"github.com/dbubel/manifold/examples/mocks"
-	"github.com/dbubel/manifold/logging"
+	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/mitchellh/cli"
 	"os"
 )

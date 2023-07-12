@@ -2,7 +2,7 @@ package queue
 
 import (
 	"context"
-	"fmt"
+	"github.com/dbubel/manifold/pkg/logging"
 	"time"
 )
 
@@ -16,9 +16,10 @@ type Queue struct {
 	cancelFunc          context.CancelFunc
 	ctx                 context.Context
 	shutdown            chan struct{}
+	log                 *logging.Logger
 }
 
-func NewQueue() *Queue {
+func NewQueue(l *logging.Logger) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	q := &Queue{
@@ -30,13 +31,14 @@ func NewQueue() *Queue {
 		lenResp:             make(chan int),
 		cancelFunc:          cancel,
 		shutdown:            make(chan struct{}),
+		log:                 l,
 	}
 	go q.start(ctx)
 	return q
 }
 
 func (q *Queue) start(ctx context.Context) {
-
+	defer q.log.Info("queue stopped")
 	for {
 		select {
 		case value := <-q.enqueueHighPriority:
@@ -57,12 +59,12 @@ func (q *Queue) start(ctx context.Context) {
 		case responseChan := <-q.lenReq:
 			responseChan <- q.list.Len()
 		case <-ctx.Done():
+			q.log.Info("queue is shutting down...")
 			close(q.enqueue)
 			close(q.dequeue)
 			close(q.lenReq)
 			close(q.lenResp)
 			close(q.enqueueHighPriority)
-			fmt.Println("shutting down")
 			time.Sleep(time.Second * 10)
 			q.shutdown <- struct{}{}
 			return
@@ -95,9 +97,6 @@ func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
 
 func (q *Queue) Len() int {
 	return q.list.len
-	//responseChan := make(chan int)
-	//q.lenReq <- responseChan
-	//return <-responseChan
 }
 
 func (q *Queue) Shutdown() {
