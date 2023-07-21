@@ -135,3 +135,15 @@ func BenchmarkNewTopics(b *testing.B) {
 		topics.Dequeue(context.Background(), testTopic)
 	}
 }
+
+func TestTopics_DeleteTopic(t *testing.T) {
+	topics := NewTopics(logging.New(logging.DEBUG))
+	topics.Enqueue("test", []byte("hello test"))
+	topics.DeleteTopic("test")
+	time.Sleep(time.Second * 5)
+	data := topics.Dequeue(context.Background(), "test")
+	if data != nil {
+		t.Errorf("expected nil, got %s", string(data))
+		return
+	}
+}

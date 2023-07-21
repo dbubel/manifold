@@ -3,13 +3,14 @@ package queue
 import (
 	"context"
 	"fmt"
+	"github.com/dbubel/manifold/pkg/logging"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestQueue_BlockingDequeue(t *testing.T) {
-	q := NewQueue()
+	q := NewQueue(logging.New(logging.DEBUG))
 
 	go func() {
 		time.Sleep(time.Millisecond * 50)
@@ -23,7 +24,7 @@ func TestQueue_BlockingDequeue(t *testing.T) {
 
 func TestNewQueue(t *testing.T) {
 	t.Run("test async enqueue async dequeue", func(t *testing.T) {
-		topics := NewQueue()
+		topics := NewQueue(logging.New(logging.DEBUG))
 		var wg sync.WaitGroup
 		var results sync.Map
 

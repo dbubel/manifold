@@ -24,6 +24,7 @@ const (
 	Manifold_StreamDequeue_FullMethodName = "/manifold.Manifold/StreamDequeue"
 	Manifold_StreamEnqueue_FullMethodName = "/manifold.Manifold/StreamEnqueue"
 	Manifold_ListTopics_FullMethodName    = "/manifold.Manifold/ListTopics"
+	Manifold_DeleteTopic_FullMethodName   = "/manifold.Manifold/DeleteTopic"
 	Manifold_TopicLength_FullMethodName   = "/manifold.Manifold/TopicLength"
 )
 
@@ -36,6 +37,7 @@ type ManifoldClient interface {
 	StreamDequeue(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (Manifold_StreamDequeueClient, error)
 	StreamEnqueue(ctx context.Context, in *EnqueueMsg, opts ...grpc.CallOption) (Manifold_StreamEnqueueClient, error)
 	ListTopics(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringList, error)
+	DeleteTopic(ctx context.Context, in *DeleteTopicMsg, opts ...grpc.CallOption) (*Empty, error)
 	TopicLength(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (*Length, error)
 }
 
@@ -138,6 +140,15 @@ func (c *manifoldClient) ListTopics(ctx context.Context, in *Empty, opts ...grpc
 	return out, nil
 }
 
+func (c *manifoldClient) DeleteTopic(ctx context.Context, in *DeleteTopicMsg, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Manifold_DeleteTopic_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *manifoldClient) TopicLength(ctx context.Context, in *DequeueMsg, opts ...grpc.CallOption) (*Length, error) {
 	out := new(Length)
 	err := c.cc.Invoke(ctx, Manifold_TopicLength_FullMethodName, in, out, opts...)
@@ -156,6 +167,7 @@ type ManifoldServer interface {
 	StreamDequeue(*DequeueMsg, Manifold_StreamDequeueServer) error
 	StreamEnqueue(*EnqueueMsg, Manifold_StreamEnqueueServer) error
 	ListTopics(context.Context, *Empty) (*StringList, error)
+	DeleteTopic(context.Context, *DeleteTopicMsg) (*Empty, error)
 	TopicLength(context.Context, *DequeueMsg) (*Length, error)
 	mustEmbedUnimplementedManifoldServer()
 }
@@ -178,6 +190,9 @@ func (UnimplementedManifoldServer) StreamEnqueue(*EnqueueMsg, Manifold_StreamEnq
 }
 func (UnimplementedManifoldServer) ListTopics(context.Context, *Empty) (*StringList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTopics not implemented")
+}
+func (UnimplementedManifoldServer) DeleteTopic(context.Context, *DeleteTopicMsg) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTopic not implemented")
 }
 func (UnimplementedManifoldServer) TopicLength(context.Context, *DequeueMsg) (*Length, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TopicLength not implemented")
@@ -291,6 +306,24 @@ func _Manifold_ListTopics_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Manifold_DeleteTopic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTopicMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManifoldServer).DeleteTopic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Manifold_DeleteTopic_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManifoldServer).DeleteTopic(ctx, req.(*DeleteTopicMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Manifold_TopicLength_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DequeueMsg)
 	if err := dec(in); err != nil {
@@ -327,6 +360,10 @@ var Manifold_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTopics",
 			Handler:    _Manifold_ListTopics_Handler,
+		},
+		{
+			MethodName: "DeleteTopic",
+			Handler:    _Manifold_DeleteTopic_Handler,
 		},
 		{
 			MethodName: "TopicLength",

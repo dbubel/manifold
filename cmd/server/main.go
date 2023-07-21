@@ -28,8 +28,8 @@ func (c *ManifoldServerCmd) Synopsis() string {
 
 type server struct {
 	proto.ManifoldServer
-	t *topics.Topics
-	l *logging.Logger
+	topics *topics.Topics
+	l      *logging.Logger
 }
 
 func (c *ManifoldServerCmd) Run(args []string) int {
@@ -50,8 +50,8 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 	}
 
 	y := &server{
-		t: topics.NewTopics(l),
-		l: l,
+		topics: topics.NewTopics(l),
+		l:      l,
 	}
 	proto.RegisterManifoldServer(grpcServer, y)
 
@@ -61,10 +61,10 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 		if err := grpcServer.Serve(lis); err != nil {
 			l.Error(err.Error())
 		}
-
 	}()
+
 	y.waitForShutdown(grpcServer)
-	//time.Sleep(time.Second)
+
 	return 0
 
 }
@@ -83,7 +83,7 @@ func (s *server) waitForShutdown(server *grpc.Server) {
 
 	server.GracefulStop()
 
-	s.t.Shutdown()
+	s.topics.ShutdownTopics()
 
 }
 

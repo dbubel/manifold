@@ -36,11 +36,18 @@ message Length {
   int32 length = 1;
 }
 
+message DeleteTopicMsg {
+  string topicName = 1;
+}
+
+
+
 service Manifold {
   rpc Enqueue(EnqueueMsg) returns (EnqueueAck) {}
   rpc Dequeue(DequeueMsg) returns (DequeueAck) {}
   rpc StreamDequeue (DequeueMsg) returns (stream DequeueAck);
   rpc StreamEnqueue (EnqueueMsg) returns (stream EnqueueAck);
   rpc ListTopics(Empty) returns (StringList) {}
+  rpc DeleteTopic(DeleteTopicMsg) returns (Empty) {}
   rpc TopicLength(DequeueMsg) returns (Length) {}
 }

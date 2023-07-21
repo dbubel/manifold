@@ -12,11 +12,12 @@ func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.Enqueu
 		s.l.Error("topic name is required")
 		return &proto.EnqueueAck{}, fmt.Errorf("topic name is required")
 	}
+
 	switch in.Priority {
 	case proto.Priority_NORMAL:
-		s.t.Enqueue(in.GetTopicName(), in.GetData())
+		s.topics.Enqueue(in.GetTopicName(), in.GetData())
 	case proto.Priority_HIGH:
-		s.t.EnqueueHighPriority(in.GetTopicName(), in.GetData())
+		s.topics.EnqueueHighPriority(in.GetTopicName(), in.GetData())
 	}
 
 	s.l.WithFields(map[string]interface{}{"priority": in.Priority.String(), "topic": in.GetTopicName(), "dataLen": len(in.GetData())}).Debug("enqueue ok")

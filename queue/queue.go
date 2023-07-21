@@ -3,7 +3,6 @@ package queue
 import (
 	"context"
 	"github.com/dbubel/manifold/pkg/logging"
-	"time"
 )
 
 type Queue struct {
@@ -65,7 +64,6 @@ func (q *Queue) start(ctx context.Context) {
 			close(q.lenReq)
 			close(q.lenResp)
 			close(q.enqueueHighPriority)
-			time.Sleep(time.Second * 10)
 			q.shutdown <- struct{}{}
 			return
 		}

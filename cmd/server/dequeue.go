@@ -12,7 +12,7 @@ func (s *server) Dequeue(ctx context.Context, in *proto.DequeueMsg) (*proto.Dequ
 		return &proto.DequeueAck{}, fmt.Errorf("error topic name is required")
 	}
 
-	data := s.t.Dequeue(ctx, in.TopicName)
+	data := s.topics.Dequeue(ctx, in.TopicName)
 
 	s.l.WithFields(map[string]interface{}{"topic": in.GetTopicName()}).Debug("dequeue msg")
 
@@ -26,7 +26,7 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 		case <-stream.Context().Done():
 			return nil
 		default:
-			data := s.t.Dequeue(stream.Context(), req.TopicName)
+			data := s.topics.Dequeue(stream.Context(), req.TopicName)
 
 			res := &proto.DequeueAck{
 				Data: data,
