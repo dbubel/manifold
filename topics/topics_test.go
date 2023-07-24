@@ -138,12 +138,22 @@ func BenchmarkNewTopics(b *testing.B) {
 
 func TestTopics_DeleteTopic(t *testing.T) {
 	topics := NewTopics(logging.New(logging.DEBUG))
-	topics.Enqueue("test", []byte("hello test"))
+	topics.Enqueue("test", []byte("hello test2"))
+	topics.Enqueue("test", []byte("hello test1"))
 	topics.DeleteTopic("test")
-	time.Sleep(time.Second * 5)
+	x := topics.Len("test")
+	if x != 0 {
+		t.Errorf("topic len should be 0 got %d", x)
+	}
+
+	topics.Enqueue("test", []byte("new data"))
+	x = topics.Len("test")
+	if x != 1 {
+		t.Errorf("topic len should be 1 got %d", x)
+	}
 	data := topics.Dequeue(context.Background(), "test")
-	if data != nil {
-		t.Errorf("expected nil, got %s", string(data))
-		return
+
+	if string(data) != "new data" {
+		t.Errorf("data invalid")
 	}
 }
