@@ -28,7 +28,7 @@ func (c *ManifoldServerCmd) Synopsis() string {
 
 type server struct {
 	proto.ManifoldServer
-	topics *topics.Topics
+	topics []*topics.Topics
 	l      *logging.Logger
 }
 
@@ -50,8 +50,9 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 		return 0
 	}
 
+	var tlist []*topics.Topics
 	y := &server{
-		topics: topics.NewTopics(l),
+		topics: append(tlist, topics.NewTopics(l), topics.NewTopics(l)),
 		l:      l,
 	}
 	proto.RegisterManifoldServer(grpcServer, y)

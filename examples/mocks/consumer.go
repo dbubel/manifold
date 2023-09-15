@@ -54,7 +54,7 @@ func (c *ConsumeCommand) Run(args []string) int {
 		if err != nil {
 			log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 		}
-		fmt.Println(string(response.Data))
+		//fmt.Println(string(response.Data))
 		_ = response
 	}
 

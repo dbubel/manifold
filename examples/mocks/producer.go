@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
+	"time"
 )
 
 type ProduceCommand struct {
@@ -34,8 +35,8 @@ func (c *ProduceCommand) Run(args []string) int {
 	}()
 
 	x := proto.NewManifoldClient(conn)
-
-	for i := 0; i < 10; i++ {
+	ts := time.Now()
+	for i := 0; i < 10000; i++ {
 		//time.Sleep(time.Millisecond * 500)
 		_, err := x.Enqueue(context.Background(), &proto.EnqueueMsg{
 			Priority:  proto.Priority_NORMAL,
@@ -47,5 +48,6 @@ func (c *ProduceCommand) Run(args []string) int {
 			log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 		}
 	}
+	fmt.Println(time.Now().Sub(ts))
 	return 1
 }
