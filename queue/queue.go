@@ -11,11 +11,11 @@ type Queue struct {
 	enqueueHighPriority chan []uint8
 	dequeue             chan chan []uint8
 	lenReq              chan chan int
-	lenResp             chan int
-	cancelFunc          context.CancelFunc
-	ctx                 context.Context
-	shutdown            chan struct{}
-	log                 *logging.Logger
+	//shutdown            chan struct{}
+	lenResp    chan int
+	cancelFunc context.CancelFunc
+	ctx        context.Context
+	log        *logging.Logger
 }
 
 func NewQueue(l *logging.Logger) *Queue {
@@ -28,9 +28,9 @@ func NewQueue(l *logging.Logger) *Queue {
 		dequeue:             make(chan chan []uint8),
 		lenReq:              make(chan chan int),
 		lenResp:             make(chan int),
-		cancelFunc:          cancel,
-		shutdown:            make(chan struct{}),
-		log:                 l,
+		//shutdown:            make(chan struct{}),
+		cancelFunc: cancel,
+		log:        l,
 	}
 	go q.start(ctx)
 	return q
@@ -64,7 +64,7 @@ func (q *Queue) start(ctx context.Context) {
 			close(q.lenReq)
 			close(q.lenResp)
 			close(q.enqueueHighPriority)
-			q.shutdown <- struct{}{}
+			//q.shutdown <- struct{}{}
 			return
 		}
 	}
@@ -97,10 +97,10 @@ func (q *Queue) Len() int {
 	return q.list.len
 }
 
-func (q *Queue) Shutdown() {
-	q.cancelFunc()
-	<-q.shutdown
-}
+//func (q *Queue) Shutdown() {
+//	q.cancelFunc()
+//	<-q.shutdown
+//}
 
 //package buffer
 //

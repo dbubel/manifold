@@ -41,12 +41,13 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 		return 0
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(xxx(l)))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(mwLogger(l)), grpc.ConnectionTimeout(time.Second))
 	defer l.WithFields(map[string]interface{}{"port": ":50051"}).Info("server stopped")
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		l.Error(err.Error())
+		return 0
 	}
 
 	y := &server{
@@ -55,11 +56,12 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 	}
 	proto.RegisterManifoldServer(grpcServer, y)
 
-	l.WithFields(map[string]interface{}{"port": ":50051"}).Info("server started")
+	l.WithFields(map[string]interface{}{"port": ":50052"}).Info("server started")
 
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			l.Error(err.Error())
+
 		}
 	}()
 
@@ -72,7 +74,7 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 func (s *server) waitForShutdown(server *grpc.Server) {
 	// Create a channel to receive the interrupt signal
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 
 	// Block until a signal is received
 	<-stop
@@ -80,15 +82,15 @@ func (s *server) waitForShutdown(server *grpc.Server) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_ = ctx
+	s.l.Info("server shutting down...")
+	server.Stop()
+	//server.GracefulStop()
 
-	server.GracefulStop()
-
-	s.topics.ShutdownTopics()
-
+	//s.topics.ShutdownTopics()
 }
 
 // UnaryInterceptor is a gRPC middleware that logs the duration of each unary RPC call.
-func xxx(l *logging.Logger) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func mwLogger(l *logging.Logger) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 

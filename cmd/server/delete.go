@@ -12,6 +12,6 @@ func (s *server) DeleteTopic(_ context.Context, in *proto.DeleteTopicMsg) (*prot
 		return &proto.Empty{}, fmt.Errorf("error topic name is required")
 	}
 
-	s.topics.ShutdownTopic(in.GetTopicName())
+	//s.topics.ShutdownTopic(in.GetTopicName())
 	return &proto.Empty{}, nil
 }

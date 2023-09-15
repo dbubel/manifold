@@ -40,19 +40,19 @@ func (t *Topics) Len(topicName string) int {
 	return topic.Len()
 }
 
-func (t *Topics) ShutdownTopics() {
-	for k, v := range t.topics {
-		t.log.WithFields(map[string]interface{}{"topic": k}).Info("topic shutting down")
-		v.Shutdown()
-	}
-}
+//func (t *Topics) ShutdownTopics() {
+//	for k, v := range t.topics {
+//		t.log.WithFields(map[string]interface{}{"topic": k}).Info("topic shutting down")
+//		v.Shutdown()
+//	}
+//}
 
-func (t *Topics) ShutdownTopic(topic string) {
-	if v, ok := t.topics[topic]; ok {
-		t.log.WithFields(map[string]interface{}{"topic": topic}).Info("topic shutting down")
-		v.Shutdown()
-	}
-}
+//func (t *Topics) ShutdownTopic(topic string) {
+//	if v, ok := t.topics[topic]; ok {
+//		t.log.WithFields(map[string]interface{}{"topic": topic}).Info("topic shutting down")
+//		v.Shutdown()
+//	}
+//}
 
 func (t *Topics) ListTopics() {
 
@@ -61,7 +61,7 @@ func (t *Topics) ListTopics() {
 func (t *Topics) DeleteTopic(topicName string) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	t.ShutdownTopic(topicName)
+	//t.ShutdownTopic(topicName)
 	delete(t.topics, topicName)
 }
 

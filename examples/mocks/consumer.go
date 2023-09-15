@@ -24,7 +24,7 @@ func (c *ConsumeCommand) Synopsis() string {
 
 func (c *ConsumeCommand) Run(args []string) int {
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
+	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -37,7 +37,7 @@ func (c *ConsumeCommand) Run(args []string) int {
 
 	x := echo.NewManifoldClient(conn)
 
-	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "test2"})
+	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "hello23"})
 	if err != nil {
 		log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 	}
