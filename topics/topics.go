@@ -21,22 +21,22 @@ func NewTopics(l *logging.Logger) *Topics {
 }
 
 func (t *Topics) Enqueue(topicName string, data []byte) {
-	topic := t.getOrCreateTopic(topicName)
+	topic := t.GetOrCreateTopic(topicName)
 	topic.Enqueue(data)
 }
 
 func (t *Topics) EnqueueHighPriority(topicName string, data []byte) {
-	topic := t.getOrCreateTopic(topicName)
+	topic := t.GetOrCreateTopic(topicName)
 	topic.EnqueueHighPriority(data)
 }
 
 func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
-	topic := t.getOrCreateTopic(topicName)
+	topic := t.GetOrCreateTopic(topicName)
 	return topic.BlockingDequeue(ctx)
 }
 
 func (t *Topics) Len(topicName string) int {
-	topic := t.getOrCreateTopic(topicName)
+	topic := t.GetOrCreateTopic(topicName)
 	return topic.Len()
 }
 
@@ -65,7 +65,7 @@ func (t *Topics) DeleteTopic(topicName string) {
 	delete(t.topics, topicName)
 }
 
-func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {
+func (t *Topics) GetOrCreateTopic(topicName string) *queue.Queue {
 	t.lock.Lock()
 	q, ok := t.topics[topicName]
 	if !ok {
@@ -124,12 +124,12 @@ func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {
 //	for {
 //		select {
 //		case req := <-t.enqueue:
-//			t.getOrCreateTopic(req.topicName).Enqueue(req.data)
+//			t.GetOrCreateTopic(req.topicName).Enqueue(req.data)
 //		case req := <-t.dequeue:
-//			queue := t.getOrCreateTopic(req.topicName)
+//			queue := t.GetOrCreateTopic(req.topicName)
 //			req.responseChan <- queue.BlockingDequeue(req.ctx)
 //		case req := <-t.lenReq:
-//			queue := t.getOrCreateTopic(req.topicName)
+//			queue := t.GetOrCreateTopic(req.topicName)
 //			req.responseChan <- queue.Len()
 //		case <-t.shutdown:
 //			close(t.enqueue)
@@ -175,7 +175,7 @@ func (t *Topics) getOrCreateTopic(topicName string) *queue.Queue {
 //	close(t.shutdown)
 //}
 //
-//func (t *Topics) getOrCreateTopic(topicName string) *buffer.Queue {
+//func (t *Topics) GetOrCreateTopic(topicName string) *buffer.Queue {
 //	queue, ok := t.topics[topicName]
 //	if !ok {
 //		queue = buffer.NewQueue()

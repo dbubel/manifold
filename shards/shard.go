@@ -1,5 +1,55 @@
 package shards
 
+import (
+	"github.com/dbubel/manifold/pkg/logging"
+	"github.com/dbubel/manifold/topics"
+	"math/rand"
+	"runtime"
+	"time"
+)
+
+var shardCount = runtime.NumCPU()
+
+type TopicShards struct {
+	topicShards []*topics.Topics
+}
+
+func pickShard(numShards int) int {
+	// Get the current timestamp
+	timestamp := time.Now().UnixNano()
+
+	// Seed the random number generator with the timestamp
+	rand.Seed(timestamp)
+
+	// Generate a random hash value using the seeded random number generator
+	hashValue := rand.Int63()
+
+	// Pick a shard based on the hash value
+	shardID := int(hashValue % int64(numShards))
+	return shardID
+}
+
+func NewShards(n int, l *logging.Logger) *TopicShards {
+	var topicShards []*topics.Topics
+	for i := 0; i < runtime.NumCPU(); i++ {
+		topicShards = append(topicShards, topics.NewTopics(l))
+	}
+
+	return &TopicShards{topicShards: topicShards}
+}
+
+func (t *TopicShards) Enqueue(topicName string, data []byte) {
+	shardId := pickShard(shardCount)
+	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+	queue.Enqueue(data)
+}
+
+func (t *TopicShards) EnqueueHighPriority(topicName string, data []byte) {
+	shardId := pickShard(shardCount)
+	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+	queue.EnqueueHighPriority(data)
+}
+
 //
 //import (
 //	"fmt"
