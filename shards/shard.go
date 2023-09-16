@@ -1,6 +1,8 @@
 package shards
 
 import (
+	"context"
+	"fmt"
 	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/dbubel/manifold/topics"
 	"math/rand"
@@ -41,6 +43,23 @@ func (t *TopicShards) EnqueueHighPriority(topicName string, data []byte) {
 	shardId := pickShard(shardCount)
 	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
 	queue.EnqueueHighPriority(data)
+}
+
+func (t *TopicShards) Len(topicName string) int {
+	totals := 0
+	for i := 0; i < len(t.topicShards); i++ {
+		fmt.Println("shard", i, "len", t.topicShards[i].Len(topicName))
+		totals = totals + t.topicShards[i].Len(topicName)
+	}
+
+	return totals
+}
+
+func (t *TopicShards) Dequeue(ctx context.Context, topicName string) []byte {
+	shardId := pickShard(shardCount)
+	fmt.Println("dqueue from", shardId)
+	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+	return queue.BlockingDequeue(ctx)
 }
 
 //

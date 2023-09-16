@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	echo "github.com/dbubel/manifold/proto_files"
 	"google.golang.org/grpc"
@@ -36,8 +37,9 @@ func (c *ConsumeCommand) Run(args []string) int {
 	}()
 
 	x := echo.NewManifoldClient(conn)
-
-	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "hello23"})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	streamer, err := x.StreamDequeue(ctx, &echo.DequeueMsg{TopicName: "hello23"})
 	if err != nil {
 		log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 	}
@@ -52,11 +54,16 @@ func (c *ConsumeCommand) Run(args []string) int {
 		}
 
 		if err != nil {
-			log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
+			log.Println("%v.MyStreamingMethod(_) = _, %v", c, err)
+			break
 		}
 		//fmt.Println(string(response.Data))
 		_ = response
 	}
 
+	LEN, _ := x.TopicLength(context.Background(), &echo.DequeueMsg{
+		TopicName: "hello23",
+	})
+	fmt.Println("FINAL LEN", LEN)
 	return 0
 }

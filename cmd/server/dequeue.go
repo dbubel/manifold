@@ -1,5 +1,7 @@
 package server
 
+import proto "github.com/dbubel/manifold/proto_files"
+
 //
 //func (s *server) Dequeue(ctx context.Context, in *proto.DequeueMsg) (*proto.DequeueAck, error) {
 //	if in.GetTopicName() == "" {
@@ -13,23 +15,23 @@ package server
 //
 //	return &proto.DequeueAck{Data: data}, nil
 //}
-//
-//func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_StreamDequeueServer) error {
-//	defer s.l.WithFields(map[string]interface{}{"topic": req.GetTopicName()}).Info("dequeue stream ending")
-//	for {
-//		select {
-//		case <-stream.Context().Done():
-//			return nil
-//		default:
-//			data := s.topics.Dequeue(stream.Context(), req.TopicName)
-//
-//			res := &proto.DequeueAck{
-//				Data: data,
-//			}
-//
-//			if err := stream.Send(res); err != nil {
-//				return err
-//			}
-//		}
-//	}
-//}
+
+func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_StreamDequeueServer) error {
+	defer s.l.WithFields(map[string]interface{}{"topic": req.GetTopicName()}).Info("dequeue stream ending")
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil
+		default:
+			data := s.topics.Dequeue(stream.Context(), req.TopicName)
+
+			res := &proto.DequeueAck{
+				Data: data,
+			}
+
+			if err := stream.Send(res); err != nil {
+				return err
+			}
+		}
+	}
+}

@@ -21,7 +21,9 @@ func main() {
 			return &mocks.ConsumeCommand{}, nil
 		},
 		"producer": func() (cli.Command, error) {
-			return &mocks.ProduceCommand{}, nil
+			return &mocks.ProduceCommand{
+				os.Args[1:],
+			}, nil
 		},
 	}
 
