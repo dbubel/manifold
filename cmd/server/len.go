@@ -1,16 +1,10 @@
 package server
 
-import (
-	"context"
-	"fmt"
-	proto "github.com/dbubel/manifold/proto_files"
-)
-
-func (s *server) TopicLength(ctx context.Context, in *proto.DequeueMsg) (*proto.Length, error) {
-	if in.GetTopicName() == "" {
-		s.l.Error("topic field is required")
-		return &proto.Length{Length: 0}, fmt.Errorf("topic name is required")
-	}
-
-	return &proto.Length{Length: int32(s.topics.Len(in.GetTopicName()))}, nil
-}
+//func (s *server) TopicLength(ctx context.Context, in *proto.DequeueMsg) (*proto.Length, error) {
+//	if in.GetTopicName() == "" {
+//		s.l.Error("topic field is required")
+//		return &proto.Length{Length: 0}, fmt.Errorf("topic name is required")
+//	}
+//
+//	//return &proto.Length{Length: int32(s.topics.Len(in.GetTopicName()))}, nil
+//}

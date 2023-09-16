@@ -1,5 +1,74 @@
 package shards
 
+import (
+	"fmt"
+	"math/rand"
+	"testing"
+	"time"
+)
+
+func TestRandom(t *testing.T) {
+	//for i:=0;i<10000;i++{
+	//	pickShard(4)
+	//}
+	var m map[int64]int
+	m = make(map[int64]int)
+	i := 0
+	timestamp := time.Now().UnixNano()
+	rand.Seed(timestamp)
+
+	for {
+		i++
+		if i > 10_000_000 {
+			return
+		}
+
+		hashValue := rand.Int63()
+		if _, ok := m[hashValue]; !ok {
+			m[hashValue] = 1
+			continue
+		} else {
+			t.Log("found collision", hashValue)
+			t.Fail()
+		}
+	}
+}
+
+func TestRandomBuckets(t *testing.T) {
+
+	var m map[int64]int
+	m = make(map[int64]int)
+	i := 0
+	timestamp := time.Now().UnixNano()
+	rand.Seed(timestamp)
+
+	n := 1000000
+	d := 4
+
+	for {
+		i++
+		if i > n {
+			break
+		}
+
+		hashValue := rand.Int63()
+		hashValue = hashValue % int64(d)
+
+		if v, ok := m[hashValue]; !ok {
+			m[hashValue] = 1
+			continue
+		} else {
+			m[hashValue] = v + 1
+		}
+	}
+
+	fmt.Println(m)
+
+	for k, v := range m {
+		fmt.Println(k, 100*(float64(v)-float64(n/d))/float64(n/d))
+	}
+}
+
 //
 //func TestShardedTopics_Enqueue(t *testing.T) {
 //	t.Run("test simple enqueue", func(t *testing.T) {

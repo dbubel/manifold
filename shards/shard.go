@@ -15,23 +15,16 @@ type TopicShards struct {
 }
 
 func pickShard(numShards int) int {
-	// Get the current timestamp
 	timestamp := time.Now().UnixNano()
-
-	// Seed the random number generator with the timestamp
 	rand.Seed(timestamp)
-
-	// Generate a random hash value using the seeded random number generator
 	hashValue := rand.Int63()
-
-	// Pick a shard based on the hash value
 	shardID := int(hashValue % int64(numShards))
 	return shardID
 }
 
 func NewShards(n int, l *logging.Logger) *TopicShards {
 	var topicShards []*topics.Topics
-	for i := 0; i < runtime.NumCPU(); i++ {
+	for i := 0; i < n; i++ {
 		topicShards = append(topicShards, topics.NewTopics(l))
 	}
 
