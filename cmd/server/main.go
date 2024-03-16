@@ -2,22 +2,21 @@ package server
 
 import (
 	"context"
-	"github.com/dbubel/manifold/config"
-	"github.com/dbubel/manifold/pkg/logging"
-	"github.com/dbubel/manifold/proto_files"
-	"github.com/dbubel/manifold/shards"
-	"github.com/kelseyhightower/envconfig"
-	"google.golang.org/grpc"
 	"net"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/dbubel/manifold/config"
+	"github.com/dbubel/manifold/pkg/logging"
+	proto "github.com/dbubel/manifold/proto_files"
+	"github.com/dbubel/manifold/topics"
+	"github.com/kelseyhightower/envconfig"
+	"google.golang.org/grpc"
 )
 
-type ManifoldServerCmd struct {
-}
+type ManifoldServerCmd struct{}
 
 func (c *ManifoldServerCmd) Help() string {
 	return ""
@@ -29,9 +28,9 @@ func (c *ManifoldServerCmd) Synopsis() string {
 
 type server struct {
 	proto.ManifoldServer
-	topics *shards.TopicShards
-	//topics *topics.Topics
-	l *logging.Logger
+	// topics *shards.TopicShards
+	topics *topics.Topics
+	l      *logging.Logger
 }
 
 func (c *ManifoldServerCmd) Run(args []string) int {
@@ -52,15 +51,15 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 		return 0
 	}
 	//
+	// y := &server{
+	// 	topics: shards.NewShards(runtime.NumCPU(), l),
+	// 	l:      l,
+	// }
+
 	y := &server{
-		topics: shards.NewShards(runtime.NumCPU(), l),
+		topics: topics.NewTopics(l),
 		l:      l,
 	}
-
-	//y := &server{
-	//	topics: topics.NewTopics(l),
-	//	l:      l,
-	//}
 
 	proto.RegisterManifoldServer(grpcServer, y)
 
@@ -69,14 +68,12 @@ func (c *ManifoldServerCmd) Run(args []string) int {
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			l.Error(err.Error())
-
 		}
 	}()
 
 	y.waitForShutdown(grpcServer)
 
 	return 0
-
 }
 
 func (s *server) waitForShutdown(server *grpc.Server) {
@@ -92,21 +89,21 @@ func (s *server) waitForShutdown(server *grpc.Server) {
 	_ = ctx
 	s.l.Info("server shutting down...")
 	server.Stop()
-	//server.GracefulStop()
+	// server.GracefulStop()
 
-	//s.topics.ShutdownTopics()
+	// s.topics.ShutdownTopics()
 }
 
 // UnaryInterceptor is a gRPC middleware that logs the duration of each unary RPC call.
 func mwLogger(l *logging.Logger) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		//start := time.Now()
+		// start := time.Now()
 
 		// Call the handler to process the RPC request
 		resp, err := handler(ctx, req)
 
-		//duration := time.Since(start)
-		//l.WithFields(map[string]interface{}{"method": info.FullMethod, "duration": duration.String()}).Debug("handled request")
+		// duration := time.Since(start)
+		// l.WithFields(map[string]interface{}{"method": info.FullMethod, "duration": duration.String()}).Debug("handled request")
 
 		return resp, err
 	}

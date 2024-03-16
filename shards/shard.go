@@ -1,67 +1,70 @@
 package shards
 
-import (
-	"context"
-	"fmt"
-	"github.com/dbubel/manifold/pkg/logging"
-	"github.com/dbubel/manifold/topics"
-	"math/rand"
-	"runtime"
-	"time"
-)
+// import (
+// 	"context"
+// 	"github.com/dbubel/manifold/pkg/logging"
+// 	"github.com/dbubel/manifold/topics"
+// 	"math/rand"
+// 	"time"
+// )
 
-var shardCount = runtime.NumCPU()
+//var shardCount = runtime.NumCPU()
+//
+// type TopicShards struct {
+// 	topicShards []*topics.Topics
+// }
+//
+// func pickShard(numShards int) int {
+// 	timestamp := time.Now().UnixNano()
+// 	rand.Seed(timestamp)
+// 	hashValue := rand.Int63()
+// 	shardID := int(hashValue % int64(numShards))
+// 	return shardID
+// }
+//
+// func NewShards(n int, l *logging.Logger) *TopicShards {
+// 	var topicShards []*topics.Topics
+// 	for i := 0; i < n; i++ {
+// 		topicShards = append(topicShards, topics.NewTopics(l))
+// 	}
+//
+// 	return &TopicShards{topicShards: topicShards}
+// }
+//
+// func (t *TopicShards) Enqueue(topicName string, data []byte) {
+// 	shardId := pickShard(len(t.topicShards))
+// 	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+// 	queue.Enqueue(data)
+// }
+//
+// func (t *TopicShards) EnqueueHighPriority(topicName string, data []byte) {
+// 	shardId := pickShard(len(t.topicShards))
+// 	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+// 	queue.EnqueueHighPriority(data)
+// }
+//
+// func (t *TopicShards) Len(topicName string) int {
+// 	totals := 0
+// 	for i := 0; i < len(t.topicShards); i++ {
+// 		//fmt.Println("shard", i, "len", t.topicShards[i].Len(topicName))
+// 		totals = totals + t.topicShards[i].Len(topicName)
+// 	}
+//
+// 	return totals
+// }
 
-type TopicShards struct {
-	topicShards []*topics.Topics
-}
-
-func pickShard(numShards int) int {
-	timestamp := time.Now().UnixNano()
-	rand.Seed(timestamp)
-	hashValue := rand.Int63()
-	shardID := int(hashValue % int64(numShards))
-	return shardID
-}
-
-func NewShards(n int, l *logging.Logger) *TopicShards {
-	var topicShards []*topics.Topics
-	for i := 0; i < n; i++ {
-		topicShards = append(topicShards, topics.NewTopics(l))
-	}
-
-	return &TopicShards{topicShards: topicShards}
-}
-
-func (t *TopicShards) Enqueue(topicName string, data []byte) {
-	shardId := pickShard(shardCount)
-	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
-	queue.Enqueue(data)
-}
-
-func (t *TopicShards) EnqueueHighPriority(topicName string, data []byte) {
-	shardId := pickShard(shardCount)
-	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
-	queue.EnqueueHighPriority(data)
-}
-
-func (t *TopicShards) Len(topicName string) int {
-	totals := 0
-	for i := 0; i < len(t.topicShards); i++ {
-		fmt.Println("shard", i, "len", t.topicShards[i].Len(topicName))
-		totals = totals + t.topicShards[i].Len(topicName)
-	}
-
-	return totals
-}
-
-func (t *TopicShards) Dequeue(ctx context.Context, topicName string) []byte {
-	shardId := pickShard(shardCount)
-	fmt.Println("dqueue from", shardId)
-	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
-	return queue.BlockingDequeue(ctx)
-}
-
+// func (t *TopicShards) Dequeue(ctx context.Context, topicName string) []byte {
+// 	shardId := pickShard(len(t.topicShards))
+// 	queue := t.topicShards[shardId].GetOrCreateTopic(topicName)
+// 	return queue.BlockingDequeue(ctx)
+// }
+//
+// func (t *TopicShards) DeleteTopic(topicName string) {
+// 	for i := 0; i < len(t.topicShards); i++ {
+// 		t.topicShards[i].DeleteTopic(topicName)
+// 	}
+// }
+//
 //
 //import (
 //	"fmt"

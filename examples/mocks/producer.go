@@ -24,22 +24,11 @@ func (c *ProduceCommand) Synopsis() string {
 	return ""
 }
 
-func gcd(a, b int) int {
-	for b != 0 {
-		a, b = b, a%b
-	}
-	return a
-}
-
-func lcm(a, b int) int {
-	return (a * b) / gcd(a, b)
-}
-
 func (c *ProduceCommand) Run(args []string) int {
-	fmt.Println(c.Args)
 	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
+		return 0
 	}
 
 	defer func() {
@@ -53,15 +42,15 @@ func (c *ProduceCommand) Run(args []string) int {
 
 	totalMsg, _ := strconv.Atoi(c.Args[1])
 	concurrency, _ := strconv.Atoi(c.Args[2])
-	fmt.Println(lcm(totalMsg, concurrency), concurrency, lcm(totalMsg, concurrency)/concurrency)
+	//fmt.Println(lcm(totalMsg, concurrency), concurrency, lcm(totalMsg, concurrency)/concurrency)
 
 	var wg sync.WaitGroup
-	totalMsg = lcm(totalMsg, concurrency)
-	wg.Add(totalMsg)
+	totalMsg = (totalMsg / concurrency) * concurrency
+	wg.Add((totalMsg / concurrency) * concurrency)
 
 	for i := 0; i < concurrency; i++ {
 		go func() {
-			for i := 0; i < lcm(totalMsg, concurrency)/concurrency; i++ {
+			for i := 0; i < totalMsg/concurrency; i++ {
 				_, err := x.Enqueue(context.Background(), &proto.EnqueueMsg{
 					Priority:  proto.Priority_NORMAL,
 					TopicName: "hello23",
@@ -77,10 +66,15 @@ func (c *ProduceCommand) Run(args []string) int {
 	}
 
 	wg.Wait()
-	fmt.Println(float64(time.Now().Sub(ts).Milliseconds())/float64(totalMsg), time.Now().Sub(ts))
 	LEN, _ := x.TopicLength(context.Background(), &proto.DequeueMsg{
 		TopicName: "hello23",
 	})
-	fmt.Println("FINAL LEN", LEN)
+	t := time.Now().Sub(ts).Milliseconds()
+	msPerMsg := float64(t) / float64(totalMsg)
+	//fmt.Println("msPerMsg,totalTime,totalMsg,concurrency,lenQueueServer")
+	fmt.Printf("%f,%d,%d,%d,%d\n", msPerMsg, t, totalMsg, concurrency, LEN.Length)
+	//fmt.Println(float64(time.Now().Sub(ts).Milliseconds())/float64(totalMsg), time.Now().Sub(ts))
+	//fmt.Println("FINAL LEN", LEN)
+	x.DeleteTopic(context.Background(), &proto.DeleteTopicMsg{TopicName: "hello23"})
 	return 1
 }

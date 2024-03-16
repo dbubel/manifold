@@ -3,7 +3,7 @@ package queue
 import "time"
 
 type Element struct {
-	//TODO: investigate stream
+	// TODO: investigate stream
 	Value       []uint8
 	EnqueueTime time.Time
 	next        *Element
