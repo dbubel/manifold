@@ -20,7 +20,7 @@ func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.Enqueu
 		s.topics.EnqueueHighPriority(in.GetTopicName(), in.GetData())
 	}
 
-	//s.l.WithFields(map[string]interface{}{"priority": in.Priority.String(), "topic": in.GetTopicName(), "dataLen": len(in.GetData())}).Debug("enqueue ok")
+	s.l.WithFields(map[string]interface{}{"priority": in.Priority.String(), "topic": in.GetTopicName(), "dataLen": len(in.GetData())}).Debug("enqueue ok")
 
 	return &proto.EnqueueAck{Data: "OK"}, nil
 }

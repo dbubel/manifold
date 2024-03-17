@@ -7,4 +7,8 @@ build:
 	GOOS=linux go build -o ./dist/server ./main.go
 
 compose: build
-	docker-compose up --build --scale api=2
+	docker-compose up --build --scale api=3 --remove-orphans
+
+# db:
+# 	docker-compose -f docker-compose.yml up --build -d postgresmq
+

@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
-type Level int
-type Fields map[string]interface{}
+type (
+	Level  int
+	Fields map[string]interface{}
+)
 
 const (
 	DEBUG Level = iota
@@ -26,7 +28,7 @@ type Message struct {
 type Logger struct {
 	level   Level
 	encoder Encoder
-	loc     *time.Location
+	// loc     *time.Location
 }
 
 type FieldEncoder struct {
@@ -50,17 +52,18 @@ func (je JsonEncoder) Encode(msg Message) {
 }
 
 func New(level Level) *Logger {
-	loc, err := time.LoadLocation("America/New_York") // Eastern Time zone
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	//currentTime := time.Now().In(loc)
+	// loc, err := time.LoadLocation("America/New_York") // Eastern Time zone
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// currentTime := time.Now().In(loc)
 	return &Logger{
 		level:   level,
 		encoder: JsonEncoder{enc: json.NewEncoder(os.Stdout)},
-		loc:     loc,
+		// loc:     loc,
 	}
 }
+
 func (l *Logger) Debug(msg string) {
 	if l.level <= DEBUG {
 		l.output("DEBUG", msg, nil)

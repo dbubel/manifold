@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"time"
 
 	echo "github.com/dbubel/manifold/proto_files"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type ConsumeCommand struct {
-}
+type ConsumeCommand struct{}
 
 func (c *ConsumeCommand) Help() string {
 	return ""
@@ -24,8 +22,7 @@ func (c *ConsumeCommand) Synopsis() string {
 }
 
 func (c *ConsumeCommand) Run(args []string) int {
-
-	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials())) //grpc.WithBlock()
+	conn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials())) // grpc.WithBlock()
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -37,11 +34,12 @@ func (c *ConsumeCommand) Run(args []string) int {
 	}()
 
 	x := echo.NewManifoldClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	streamer, err := x.StreamDequeue(ctx, &echo.DequeueMsg{TopicName: "hello23"})
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// defer cancel()
+	streamer, err := x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "hello23"})
 	if err != nil {
 		log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
+		return 0
 	}
 
 	// Listen on the stream
@@ -53,11 +51,13 @@ func (c *ConsumeCommand) Run(args []string) int {
 			break
 		}
 
-		if err != nil {
-			log.Println("%v.MyStreamingMethod(_) = _, %v", c, err)
-			break
-		}
-		//fmt.Println(string(response.Data))
+		// if err != nil {
+		// 	fmt.Println("error listening on stream", err.Error())
+		// 	// ctx, _ = context.WithTimeout(context.Background(), time.Second)
+		// 	streamer, err = x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "hello23"})
+		// 	continue
+		// }
+		fmt.Println(string(response.Data))
 		_ = response
 	}
 

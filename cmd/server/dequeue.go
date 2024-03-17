@@ -30,6 +30,8 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 			}
 
 			if err := stream.Send(res); err != nil {
+				// if we had an error sending then enqueue the data we tried to send
+				s.topics.Enqueue(req.TopicName, data)
 				return err
 			}
 		}

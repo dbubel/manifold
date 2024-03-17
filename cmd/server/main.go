@@ -95,7 +95,7 @@ func (s *server) waitForShutdown(server *grpc.Server) {
 }
 
 // UnaryInterceptor is a gRPC middleware that logs the duration of each unary RPC call.
-func mwLogger(l *logging.Logger) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func mwLogger(_ *logging.Logger) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// start := time.Now()
 
