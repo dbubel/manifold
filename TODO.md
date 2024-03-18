@@ -1,0 +1,1 @@
+- invisible message after dequeue, still exists in queue but cannot be dequeued think of some kind of feature for if a message fails it comes back after a ttl to get picked back up.
