@@ -12,10 +12,9 @@ type Queue struct {
 	enqueueHighPriority chan []uint8
 	dequeue             chan chan []uint8
 	lenReq              chan chan int
-	lenResp             chan int
-	cancelFunc          context.CancelFunc
-	ctx                 context.Context
-	log                 *logging.Logger
+	cancelFunc context.CancelFunc
+	ctx        context.Context
+	log        *logging.Logger
 }
 
 func NewQueue(l *logging.Logger) *Queue {
@@ -27,9 +26,8 @@ func NewQueue(l *logging.Logger) *Queue {
 		enqueueHighPriority: make(chan []uint8),
 		dequeue:             make(chan chan []uint8),
 		lenReq:              make(chan chan int),
-		lenResp:             make(chan int),
-		cancelFunc:          cancel,
-		log:                 l,
+		cancelFunc: cancel,
+		log:        l,
 	}
 	go q.start(ctx)
 	return q
@@ -61,7 +59,6 @@ func (q *Queue) start(ctx context.Context) {
 			close(q.enqueue)
 			close(q.dequeue)
 			close(q.lenReq)
-			close(q.lenResp)
 			close(q.enqueueHighPriority)
 			return
 		}

@@ -51,12 +51,6 @@ func (c *ConsumeCommand) Run(args []string) int {
 			break
 		}
 
-		// if err != nil {
-		// 	fmt.Println("error listening on stream", err.Error())
-		// 	// ctx, _ = context.WithTimeout(context.Background(), time.Second)
-		// 	streamer, err = x.StreamDequeue(context.Background(), &echo.DequeueMsg{TopicName: "hello23"})
-		// 	continue
-		// }
 		fmt.Println(string(response.Data))
 		_ = response
 	}

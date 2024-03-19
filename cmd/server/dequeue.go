@@ -1,6 +1,10 @@
 package server
 
-import proto "github.com/dbubel/manifold/proto_files"
+import (
+	"fmt"
+
+	proto "github.com/dbubel/manifold/proto_files"
+)
 
 //
 //func (s *server) Dequeue(ctx context.Context, in *proto.DequeueMsg) (*proto.DequeueAck, error) {
@@ -23,6 +27,10 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 		case <-stream.Context().Done():
 			return nil
 		default:
+			if req.GetTopicName() == "" {
+				return fmt.Errorf("error topic name is required")
+			}
+
 			data := s.topics.Dequeue(stream.Context(), req.TopicName)
 
 			res := &proto.DequeueAck{

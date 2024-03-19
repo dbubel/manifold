@@ -3,11 +3,12 @@ package topics
 import (
 	"context"
 	"fmt"
-	"github.com/dbubel/manifold/pkg/logging"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/dbubel/manifold/pkg/logging"
 )
 
 func TestTopics_EnqueueDequeueSimple(t *testing.T) {
@@ -28,11 +29,6 @@ func TestTopics_EnqueueDequeueSimple(t *testing.T) {
 	go topic2.Dequeue(ctx, "test")
 	go topic3.Dequeue(ctx, "test")
 	go topic4.Dequeue(ctx, "test")
-
-	//if string(data) != "hello test" {
-	//	t.Errorf("expected 'hello test', got %s", string(data))
-	//	return
-	//}
 }
 
 func TestTopics_EnqueueDequeueMultipleTopics(t *testing.T) {
@@ -101,65 +97,6 @@ func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
 	if i != 200 {
 		t.Errorf("expected 200 results, got %d", i)
 	}
-
-}
-
-func BenchmarkTopics_AsyncEnqueueDequeue(b *testing.B) {
-	topics1 := NewTopics(logging.New(logging.DEBUG))
-	//topics2 := NewTopics(logging.New(logging.DEBUG))
-	//topics3 := NewTopics(logging.New(logging.DEBUG))
-	//topics4 := NewTopics(logging.New(logging.DEBUG))
-
-	s := GenerateRandomString(1000)
-	var n int
-	var wg sync.WaitGroup
-	for i := 0; i < b.N; i++ {
-		n++
-		go func(a int) {
-			wg.Add(1)
-			topics1.Dequeue(context.Background(), testTopic)
-			wg.Done()
-		}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics2.Dequeue(context.Background(), testTopic)
-		//	wg.Done()
-		//}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics3.Dequeue(context.Background(), testTopic)
-		//	wg.Done()
-		//}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics4.Dequeue(context.Background(), testTopic)
-		//	wg.Done()
-		//}(i)
-	}
-
-	for i := 0; i < b.N; i++ {
-		go func(a int) {
-			wg.Add(1)
-			topics1.Enqueue(testTopic, s)
-			wg.Done()
-		}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics2.Enqueue(testTopic, s)
-		//	wg.Done()
-		//}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics3.Enqueue(testTopic, s)
-		//	wg.Done()
-		//}(i)
-		//go func(a int) {
-		//	wg.Add(1)
-		//	topics4.Enqueue(testTopic, s)
-		//	wg.Done()
-		//}(i)
-	}
-	wg.Wait()
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -176,15 +113,6 @@ func GenerateRandomString(length int) []byte {
 }
 
 const testTopic = "test_topic"
-
-func BenchmarkNewTopics(b *testing.B) {
-	topics := NewTopics(logging.New(logging.DEBUG))
-	s := GenerateRandomString(1000)
-	for i := 0; i < b.N; i++ {
-		topics.Enqueue(testTopic, s)
-		topics.Dequeue(context.Background(), testTopic)
-	}
-}
 
 func TestTopics_DeleteTopic(t *testing.T) {
 	topics := NewTopics(logging.New(logging.DEBUG))
