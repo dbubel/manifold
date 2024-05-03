@@ -42,6 +42,10 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 				s.topics.Enqueue(req.TopicName, data)
 				return err
 			}
+
 		}
 	}
+}
+func (s *server) TempDequeue() {
+
 }

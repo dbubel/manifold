@@ -30,7 +30,7 @@ func (c *ConsumeCommand) Run(args []string) int {
 	defer func() {
 		if err := conn.Close(); err != nil {
 			fmt.Println(err.Error())
-		}
+		} 
 	}()
 
 	x := echo.NewManifoldClient(conn)
@@ -41,7 +41,6 @@ func (c *ConsumeCommand) Run(args []string) int {
 		log.Fatalf("%v.MyStreamingMethod(_) = _, %v", c, err)
 		return 0
 	}
-
 	// Listen on the stream
 	fmt.Println("Listening on the stream")
 	for {

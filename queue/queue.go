@@ -3,21 +3,32 @@ package queue
 import (
 	"context"
 
+	list "github.com/dbubel/manifold/mempool"
 	"github.com/dbubel/manifold/pkg/logging"
 )
 
-type Queue struct {
-	list                *List
+type ByteArray []byte
+
+func (array ByteArray) Erase() error {
+	for i := 0; i < len(array); i++ {
+		array[i] = 0
+	}
+
+	return nil
+}
+
+type Queue[T any] struct {
+	list                *list.Pool[ByteArray]
 	enqueue             chan []uint8
 	enqueueHighPriority chan []uint8
 	dequeue             chan chan []uint8
 	lenReq              chan chan int
-	cancelFunc context.CancelFunc
-	ctx        context.Context
-	log        *logging.Logger
+	cancelFunc          context.CancelFunc
+	ctx                 context.Context
+	log                 *logging.Logger
 }
 
-func NewQueue(l *logging.Logger) *Queue {
+func NewQueue(l *logging.Logger) *Queue[ByteArray] {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	q := &Queue{
@@ -26,8 +37,8 @@ func NewQueue(l *logging.Logger) *Queue {
 		enqueueHighPriority: make(chan []uint8),
 		dequeue:             make(chan chan []uint8),
 		lenReq:              make(chan chan int),
-		cancelFunc: cancel,
-		log:        l,
+		cancelFunc:          cancel,
+		log:                 l,
 	}
 	go q.start(ctx)
 	return q

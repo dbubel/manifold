@@ -2,9 +2,10 @@ package topics
 
 import (
 	"context"
+	"sync"
+
 	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/dbubel/manifold/queue"
-	"sync"
 )
 
 type Topics struct {
@@ -55,13 +56,12 @@ func (t *Topics) Len(topicName string) int {
 //}
 
 func (t *Topics) ListTopics() {
-
 }
 
 func (t *Topics) DeleteTopic(topicName string) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	//t.ShutdownTopic(topicName)
+	// t.ShutdownTopic(topicName)
 	delete(t.topics, topicName)
 }
 
