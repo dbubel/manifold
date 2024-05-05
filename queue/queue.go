@@ -5,6 +5,7 @@ import (
 
 	// list "github.com/dbubel/manifold/mempool"
 	"github.com/dbubel/manifold/pkg/logging"
+	"github.com/google/uuid"
 )
 
 // type ByteArray []byte
@@ -18,10 +19,12 @@ import (
 // }
 
 type Queue struct {
-	list                *List
-	enqueue             chan []uint8
-	enqueueHighPriority chan []uint8
-	dequeue             chan chan []uint8
+	list     *List
+	dequeued map[uuid.UUID]*Element
+	// enqueueElement      chan *Element
+	enqueue             chan *Element
+	enqueueHighPriority chan *Element
+	dequeue             chan chan *Element
 	lenReq              chan chan int
 	cancelFunc          context.CancelFunc
 	ctx                 context.Context
@@ -32,10 +35,12 @@ func NewQueue(l *logging.Logger) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	q := &Queue{
-		list:                New(),
-		enqueue:             make(chan []uint8),
-		enqueueHighPriority: make(chan []uint8),
-		dequeue:             make(chan chan []uint8),
+		list:     New(),
+		dequeued: make(map[uuid.UUID]*Element),
+		enqueue:  make(chan *Element),
+		// enqueueElement:      make(chan *Element),
+		enqueueHighPriority: make(chan *Element),
+		dequeue:             make(chan chan *Element),
 		lenReq:              make(chan chan int),
 		cancelFunc:          cancel,
 		log:                 l,
@@ -55,11 +60,15 @@ func (q *Queue) start(ctx context.Context) {
 		case responseChan := <-q.dequeue:
 			if q.list.Len() == 0 {
 				// Wait for an enqueue operation if the list is empty
+				q.log.Debug("WAIT")
 				value := <-q.enqueue
 				responseChan <- value
+				q.AddDequeued(value)
 			} else {
 				element := q.list.Front()
-				val := element.Value
+				q.AddDequeued(element)
+				// q.dequeued[element.ID] = element
+				val := element
 				q.list.Remove(element)
 				responseChan <- val
 			}
@@ -81,16 +90,21 @@ func (q *Queue) BatchedDequeue(ctx context.Context, n int) [][]uint8 {
 	return [][]uint8{}
 }
 
-func (q *Queue) Enqueue(value []uint8) {
+func (q *Queue) Enqueue(value *Element) {
 	q.enqueue <- value
 }
 
-func (q *Queue) EnqueueHighPriority(value []uint8) {
+// func (q *Queue) EnqueueElement(value *Element) {
+// 	q.log.Debug("in enqueueElement func")
+// 	q.enqueueElement <- value
+// }
+
+func (q *Queue) EnqueueHighPriority(value *Element) {
 	q.enqueueHighPriority <- value
 }
 
-func (q *Queue) BlockingDequeue(ctx context.Context) []uint8 {
-	responseChan := make(chan []uint8)
+func (q *Queue) BlockingDequeue(ctx context.Context) *Element {
+	responseChan := make(chan *Element)
 	select {
 	case q.dequeue <- responseChan:
 		return <-responseChan

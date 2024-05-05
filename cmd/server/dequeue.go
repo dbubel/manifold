@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 
 	proto "github.com/dbubel/manifold/proto_files"
@@ -34,7 +35,7 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 			data := s.topics.Dequeue(stream.Context(), req.TopicName)
 
 			res := &proto.DequeueAck{
-				Data: data,
+				Data: data.Value,
 			}
 
 			if err := stream.Send(res); err != nil {
@@ -42,10 +43,10 @@ func (s *server) StreamDequeue(req *proto.DequeueMsg, stream proto.Manifold_Stre
 				s.topics.Enqueue(req.TopicName, data)
 				return err
 			}
-
 		}
 	}
 }
-func (s *server) TempDequeue() {
 
+func (s *server) Ack(ctx context.Context, in *proto.Remove) (*proto.Empty, error) {
+	return &proto.Empty{}, nil
 }

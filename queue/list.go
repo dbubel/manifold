@@ -1,11 +1,17 @@
 package queue
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Element struct {
 	// TODO: investigate stream
 	Value       []uint8
 	EnqueueTime time.Time
+	ID          uuid.UUID
+	Complete    chan struct{}
 	next        *Element
 	prev        *Element
 	list        *List
@@ -34,14 +40,19 @@ func (l *List) Remove(e *Element) []uint8 {
 	return e.Value
 }
 
-func (l *List) PushFront(v []uint8) *Element {
+func (l *List) PushFront(v *Element) *Element {
 	l.lazyInit()
-	return l.insertValue(v, &l.root)
+	return l.insert(v, &l.root)
 }
 
-func (l *List) PushBack(v []uint8) *Element {
+func (l *List) PushBack(v *Element) *Element {
 	l.lazyInit()
-	return l.insertValue(v, l.root.prev)
+	return l.insert(v, l.root.prev)
+}
+
+func (l *List) PushBackElement(v *Element) *Element {
+	l.lazyInit()
+	return l.insert(v, l.root.prev)
 }
 
 func (l *List) Len() int {
@@ -78,9 +89,9 @@ func (l *List) insert(e, at *Element) *Element {
 	return e
 }
 
-func (l *List) insertValue(v []uint8, at *Element) *Element {
-	return l.insert(&Element{Value: v, EnqueueTime: time.Now()}, at)
-}
+// func (l *List) insertValue(v []uint8, at *Element) *Element {
+// 	return l.insert(&Element{ID: uuid.New(), Value: v, EnqueueTime: time.Now()}, at)
+// }
 
 func (l *List) remove(e *Element) *Element {
 	e.prev.next = e.next

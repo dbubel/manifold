@@ -3,10 +3,11 @@ package queue
 import (
 	"context"
 	"fmt"
-	"github.com/dbubel/manifold/pkg/logging"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/dbubel/manifold/pkg/logging"
 )
 
 func TestQueue_BlockingDequeue(t *testing.T) {
@@ -45,7 +46,7 @@ func TestNewQueue(t *testing.T) {
 
 		wg.Wait()
 
-		//time.Sleep(time.Millisecond * 100)
+		// time.Sleep(time.Millisecond * 100)
 
 		allPresent := true
 

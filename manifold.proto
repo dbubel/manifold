@@ -40,12 +40,17 @@ message DeleteTopicMsg {
   string topicName = 1;
 }
 
+message Remove {
+  bytes id = 1;
+}
+
 
 
 service Manifold {
-  rpc Enqueue(EnqueueMsg) returns (EnqueueAck) {}
-  rpc Dequeue(DequeueMsg) returns (DequeueAck) {}
+  rpc Enqueue(EnqueueMsg) returns (Empty) {}
+  // rpc Dequeue(DequeueMsg) returns (DequeueAck) {}
   rpc StreamDequeue (DequeueMsg) returns (stream DequeueAck);
+  rpc Ack (Remove) returns (Empty) {}
   // rpc StreamEnqueue (EnqueueMsg) returns (stream EnqueueAck);
   rpc ListTopics(Empty) returns (StringList) {}
   rpc DeleteTopic(DeleteTopicMsg) returns (Empty) {}

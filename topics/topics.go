@@ -21,17 +21,17 @@ func NewTopics(l *logging.Logger) *Topics {
 	}
 }
 
-func (t *Topics) Enqueue(topicName string, data []byte) {
+func (t *Topics) Enqueue(topicName string, data *queue.Element) {
 	topic := t.GetOrCreateTopic(topicName)
 	topic.Enqueue(data)
 }
 
-func (t *Topics) EnqueueHighPriority(topicName string, data []byte) {
+func (t *Topics) EnqueueHighPriority(topicName string, data *queue.Element) {
 	topic := t.GetOrCreateTopic(topicName)
 	topic.EnqueueHighPriority(data)
 }
 
-func (t *Topics) Dequeue(ctx context.Context, topicName string) []byte {
+func (t *Topics) Dequeue(ctx context.Context, topicName string) *queue.Element {
 	topic := t.GetOrCreateTopic(topicName)
 	return topic.BlockingDequeue(ctx)
 }
