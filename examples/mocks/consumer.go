@@ -30,7 +30,7 @@ func (c *ConsumeCommand) Run(args []string) int {
 	defer func() {
 		if err := conn.Close(); err != nil {
 			fmt.Println(err.Error())
-		} 
+		}
 	}()
 
 	x := echo.NewManifoldClient(conn)

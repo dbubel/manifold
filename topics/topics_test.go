@@ -1,8 +1,11 @@
 package topics
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,87 +34,105 @@ func TestTopics_EnqueueDequeueSimple(t *testing.T) {
 	fmt.Println(item)
 }
 
-//
-// func TestTopics_EnqueueDequeueMultipleTopics(t *testing.T) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-// 	defer cancel()
-// 	topic := NewTopics(logging.New(logging.DEBUG))
-//
-// 	topic.Enqueue("test", []byte("hello test"))
-// 	data := topic.Dequeue(ctx, "test")
-// 	if string(data) != "hello test" {
-// 		t.Errorf("expected 'hello test', got %s", string(data))
-// 		return
-// 	}
-//
-// 	topic.Enqueue("test two", []byte("hello test two"))
-// 	data = topic.Dequeue(ctx, "test two")
-// 	if string(data) != "hello test two" {
-// 		t.Errorf("expected 'hello test two', got %s", string(data))
-// 		return
-// 	}
-// }
-//
-// func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
-// 	topics := NewTopics(logging.New(logging.DEBUG))
-// 	var wg sync.WaitGroup
-// 	var results sync.Map
-//
-// 	for i := 0; i < 100; i++ {
-// 		go func(a int) {
-// 			val := topics.Dequeue(context.Background(), "topic_one")
-// 			results.Store(string(val), a)
-// 		}(i)
-// 	}
-//
-// 	for i := 0; i < 100; i++ {
-// 		go func(a int) {
-// 			val := topics.Dequeue(context.Background(), "topic_two")
-// 			results.Store(string(val), a)
-// 		}(i)
-// 	}
-//
-// 	for i := 0; i < 100; i++ {
-// 		go func(a int) {
-// 			wg.Add(1)
-// 			topics.Enqueue("topic_one", []byte(fmt.Sprintf("hello world one %d", a)))
-// 			wg.Done()
-// 		}(i)
-// 	}
-//
-// 	for i := 0; i < 100; i++ {
-// 		go func(a int) {
-// 			wg.Add(1)
-// 			topics.Enqueue("topic_two", []byte(fmt.Sprintf("hello world two %d", a)))
-// 			wg.Done()
-// 		}(i)
-// 	}
-// 	time.Sleep(time.Millisecond * 250)
-// 	wg.Wait()
-//
-// 	i := 0
-// 	results.Range(func(key, value any) bool {
-// 		i++
-// 		return true
-// 	})
-//
-// 	if i != 200 {
-// 		t.Errorf("expected 200 results, got %d", i)
-// 	}
-// }
-//
-// var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-//
-// func GenerateRandomString(length int) []byte {
-// 	// Seed the random number generator
-// 	rand.Seed(time.Now().UnixNano())
-//
-// 	s := make([]rune, length)
-// 	for i := range s {
-// 		s[i] = letters[rand.Intn(len(letters))]
-// 	}
-// 	return []byte(string(s))
-// }
+func TestTopics_EnqueueDequeueMultipleTopics(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	topic := NewTopics(logging.New(logging.DEBUG))
+
+	id := uuid.New()
+	element := queue.Element{
+		Value:       []byte("test"),
+		ID:          id,
+		EnqueueTime: time.Now(),
+		Complete:    make(chan struct{}),
+	}
+	topic.Enqueue("test", &element)
+	data := topic.Dequeue(ctx, "test")
+	if !bytes.Equal(data.Value, element.Value) {
+		t.Errorf("values not equal")
+		return
+	}
+
+	element.Value = []byte("test2")
+	topic.Enqueue("test2", &element)
+	data = topic.Dequeue(ctx, "test2")
+	if !bytes.Equal(data.Value, element.Value) {
+		t.Errorf("value 2 not equal [%s] [%s]", data.Value, element.Value)
+		return
+	}
+}
+
+func TestTopics_AsyncEnqueueDequeueMultipleTopics(t *testing.T) {
+	topics := NewTopics(logging.New(logging.DEBUG))
+	var wg sync.WaitGroup
+	var results sync.Map
+	id := uuid.New()
+
+	for i := 0; i < 100; i++ {
+		go func(a int) {
+			val := topics.Dequeue(context.Background(), "topic_one")
+			results.Store(val, a)
+		}(i)
+	}
+
+	for i := 0; i < 100; i++ {
+		go func(a int) {
+			val := topics.Dequeue(context.Background(), "topic_two")
+			results.Store(val, a)
+		}(i)
+	}
+
+	for i := 0; i < 100; i++ {
+		element := queue.Element{
+			Value:       []byte("test"),
+			ID:          id,
+			EnqueueTime: time.Now(),
+			Complete:    make(chan struct{}),
+		}
+		go func(a int) {
+			wg.Add(1)
+			topics.Enqueue("topic_one", &element)
+			wg.Done()
+		}(i)
+	}
+
+	for i := 0; i < 100; i++ {
+		element := queue.Element{
+			Value:       []byte("test"),
+			ID:          id,
+			EnqueueTime: time.Now(),
+			Complete:    make(chan struct{}),
+		}
+		go func(a int) {
+			wg.Add(1)
+			topics.Enqueue("topic_two", &element)
+			wg.Done()
+		}(i)
+	}
+	time.Sleep(time.Millisecond * 250)
+	wg.Wait()
+
+	i := 0
+	results.Range(func(key, value any) bool {
+		i++
+		return true
+	})
+
+	if i != 200 {
+		t.Errorf("expected 200 results, got %d", i)
+	}
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func GenerateRandomString(length int) []byte {
+	s := make([]rune, length)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return []byte(string(s))
+}
+
 //
 // const testTopic = "test_topic"
 //

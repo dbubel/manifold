@@ -1,7 +1,10 @@
 package queue
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,48 +34,62 @@ func TestQueue_BlockingDequeue(t *testing.T) {
 		t.Error("id does not match", id, item.ID)
 		t.FailNow()
 	}
+	if !bytes.Equal(item.Value, element.Value) {
+		t.Error("values do not match", id, item.ID)
+		t.FailNow()
+	}
+	if item.EnqueueTime.Unix() != element.EnqueueTime.Unix() {
+		t.Error("timestamps do not match", id, item.ID)
+		t.FailNow()
+	}
 }
 
-// func TestNewQueue(t *testing.T) {
-// 	t.Run("test async enqueue async dequeue", func(t *testing.T) {
-// 		topics := NewQueue(logging.New(logging.DEBUG))
-// 		var wg sync.WaitGroup
-// 		var results sync.Map
-//
-// 		for i := 0; i < 100; i++ {
-// 			go func(a int) {
-// 				defer wg.Done()
-// 				val := topics.BlockingDequeue(context.Background())
-// 				results.Store(a, string(val))
-// 			}(i)
-// 		}
-//
-// 		for i := 0; i < 100; i++ {
-// 			go func(a int) {
-// 				wg.Add(1)
-// 				topics.Enqueue([]byte(fmt.Sprintf("hello world %d", a)))
-// 			}(i)
-// 		}
-//
-// 		wg.Wait()
-//
-// 		// time.Sleep(time.Millisecond * 100)
-//
-// 		allPresent := true
-//
-// 		for i := 0; i < 100; i++ {
-// 			_ = fmt.Sprintf("hello world %d", i)
-// 			val, found := results.Load(i)
-// 			_ = val
-// 			if !found {
-// 				allPresent = false
-// 				break
-// 			}
-// 		}
-//
-// 		if !allPresent {
-// 			t.Error("Some strings are missing from the sync map")
-// 			return
-// 		}
-// 	})
-// }
+func TestNewQueue(t *testing.T) {
+	t.Run("test async enqueue async dequeue", func(t *testing.T) {
+		q := NewQueue(logging.New(logging.DEBUG))
+
+		id := uuid.New()
+		element := Element{
+			Value:       []byte("dean"),
+			ID:          id,
+			EnqueueTime: time.Now(),
+			Complete:    make(chan struct{}),
+		}
+		var wg sync.WaitGroup
+		var results sync.Map
+
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				defer wg.Done()
+				val := q.BlockingDequeue(context.Background())
+				results.Store(a, val)
+			}(i)
+		}
+
+		for i := 0; i < 100; i++ {
+			go func(a int) {
+				wg.Add(1)
+				q.Enqueue(&element)
+			}(i)
+		}
+
+		wg.Wait()
+
+		allPresent := true
+
+		for i := 0; i < 100; i++ {
+			_ = fmt.Sprintf("hello world %d", i)
+			val, found := results.Load(i)
+			_ = val
+			if !found {
+				allPresent = false
+				break
+			}
+		}
+
+		if !allPresent {
+			t.Error("Some strings are missing from the sync map")
+			return
+		}
+	})
+}

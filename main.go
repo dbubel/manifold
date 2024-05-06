@@ -1,11 +1,12 @@
 package main
 
 import (
+	"os"
+
 	"github.com/dbubel/manifold/cmd/server"
 	"github.com/dbubel/manifold/examples/mocks"
 	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/mitchellh/cli"
-	"os"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 		},
 		"producer": func() (cli.Command, error) {
 			return &mocks.ProduceCommand{
-				os.Args[1:],
+				Args: os.Args[1:],
 			}, nil
 		},
 	}
