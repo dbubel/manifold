@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dbubel/manifold/internal"
 	proto "github.com/dbubel/manifold/proto_files"
 	"github.com/dbubel/manifold/queue"
+	"github.com/google/uuid"
 )
 
 func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.Empty, error) {
@@ -15,15 +17,25 @@ func (s *server) Enqueue(_ context.Context, in *proto.EnqueueMsg) (*proto.Empty,
 		return &proto.Empty{}, fmt.Errorf("topic name is required")
 	}
 
-	switch in.Priority {
-	case proto.Priority_NORMAL:
-		// s.topics.Enqueue(in.GetTopicName(), in.GetData())
-		s.topics.Enqueue(in.GetTopicName(), &queue.Element{Value: in.GetData()})
-	case proto.Priority_HIGH:
-		s.topics.EnqueueHighPriority(in.GetTopicName(), &queue.Element{Value: in.GetData()})
+	element := queue.Element{
+		Value:       in.GetData(),
+		ID:          uuid.New(),
+		EnqueueTime: time.Now(),
+		Complete:    make(chan struct{}),
 	}
 
-	s.l.WithFields(map[string]interface{}{"priority": in.Priority.String(), "topic": in.GetTopicName(), "dataLen": len(in.GetData())}).Debug("enqueue ok")
+	switch in.Priority {
+	case proto.Priority_NORMAL:
+		s.topics.Enqueue(in.GetTopicName(), &element)
+	case proto.Priority_HIGH:
+		s.topics.EnqueueHighPriority(in.GetTopicName(), &element)
+	}
+
+	s.l.WithFields(map[string]interface{}{
+		"priority": in.Priority.String(),
+		"topic":    in.GetTopicName(),
+		"dataLen":  len(in.GetData()),
+	}).Debug("enqueue ok")
 
 	return &proto.Empty{}, nil
 }

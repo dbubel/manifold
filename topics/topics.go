@@ -6,6 +6,7 @@ import (
 
 	"github.com/dbubel/manifold/pkg/logging"
 	"github.com/dbubel/manifold/queue"
+	"github.com/google/uuid"
 )
 
 type Topics struct {
@@ -19,6 +20,11 @@ func NewTopics(l *logging.Logger) *Topics {
 		topics: make(map[string]*queue.Queue),
 		log:    l,
 	}
+}
+
+func (t *Topics) AckDequeue(topicName string, id uuid.UUID) {
+	topic := t.GetOrCreateTopic(topicName)
+	topic.RemoveDequed(id)
 }
 
 func (t *Topics) Enqueue(topicName string, data *queue.Element) {

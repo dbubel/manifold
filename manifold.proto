@@ -41,7 +41,8 @@ message DeleteTopicMsg {
 }
 
 message Remove {
-  bytes id = 1;
+  string id = 1;
+  string topicName = 2;
 }
 
 

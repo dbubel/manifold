@@ -17,4 +17,4 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 #### Make sure you have this in your path
 https://github.com/protocolbuffers/protobuf/releases
 #### Also make sure you have your go install location in your path 
-PATH=#PATH:/goinstall/bin
+PATH=$PATH:/goinstall/bin

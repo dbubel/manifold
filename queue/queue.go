@@ -19,9 +19,8 @@ import (
 // }
 
 type Queue struct {
-	list     *List
-	dequeued map[uuid.UUID]*Element
-	// enqueueElement      chan *Element
+	list                *List
+	dequeued            map[uuid.UUID]*Element
 	enqueue             chan *Element
 	enqueueHighPriority chan *Element
 	dequeue             chan chan *Element
@@ -35,10 +34,9 @@ func NewQueue(l *logging.Logger) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	q := &Queue{
-		list:     New(),
-		dequeued: make(map[uuid.UUID]*Element),
-		enqueue:  make(chan *Element),
-		// enqueueElement:      make(chan *Element),
+		list:                New(),
+		dequeued:            make(map[uuid.UUID]*Element),
+		enqueue:             make(chan *Element),
 		enqueueHighPriority: make(chan *Element),
 		dequeue:             make(chan chan *Element),
 		lenReq:              make(chan chan int),
@@ -60,14 +58,12 @@ func (q *Queue) start(ctx context.Context) {
 		case responseChan := <-q.dequeue:
 			if q.list.Len() == 0 {
 				// Wait for an enqueue operation if the list is empty
-				q.log.Debug("WAIT")
 				value := <-q.enqueue
 				responseChan <- value
-				q.AddDequeued(value)
 			} else {
 				element := q.list.Front()
 				q.AddDequeued(element)
-				// q.dequeued[element.ID] = element
+				q.dequeued[element.ID] = element
 				val := element
 				q.list.Remove(element)
 				responseChan <- val
